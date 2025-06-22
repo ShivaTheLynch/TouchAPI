@@ -408,6 +408,10 @@ Func Inventory()
 		Sell($i)
 	Next
 
+	For $i = 1 To 4
+		Sell2($i)
+	Next
+
 	If GetGoldCharacter() > 90000 Then
 		Out("Depositing Gold")
 		DepositGold()
@@ -426,6 +430,10 @@ Func Inventory()
 		Out("Sell leftover items")
 		For $i = 1 To 4
 			Sell($i)
+		Next
+
+		For $i = 1 To 4
+			Sell2($i)
 		Next
 	EndIf
 
