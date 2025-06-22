@@ -47,4 +47,3 @@
 
 #include "TouchApi/TouchAddons.au3"
 #include "constants/skill_id.au3"
-#include "TouchApi/complete_skill_names.au3"

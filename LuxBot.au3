@@ -20,7 +20,7 @@
 #include <WinAPITheme.au3> ; <<<<<<<<<<<<<<<<<<
 #include <WinAPIDiag.au3>
 #include "_gwApi.au3"
-
+#include "TouchApi/complete_skill_names.au3"
 
 ; Range constants for different attack ranges
 
@@ -70,7 +70,7 @@ Global $CustomFightingEnabled = False ; Whether custom fighting is enabled
 Global $CurrentCustomSkillIndex = 0 ; Current position in custom fighting order
 
 ; Global array to store skill names mapped to IDs
-Global $SkillNameArray[10000] ; Large enough to hold all skill IDs
+; Global $SkillNameArray[10000] ; Large enough to hold all skill IDs
 
 Global $CameFromTown = False
 #EndRegion Declaration
@@ -2099,9 +2099,6 @@ EndFunc
 ; Function to initialize skill names when GUI is first created
 Func InitializeSkillNames()
     Out("Initializing skill names display...")
-    
-    ; Build the skill name array first
-    BuildSkillNameArray()
     
     ; Set placeholder names
     For $i = 0 To 7
