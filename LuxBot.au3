@@ -2048,9 +2048,6 @@ Func BuildSkillNameArray()
         $SkillNameArray[$i] = ""
     Next
     
-    ; Include the complete skill names file
-    #include "complete_skill_names.au3"
-    
     Out("Skill name array built with " & UBound($SkillNameArray) & " entries")
 EndFunc
 
