@@ -1,6 +1,5 @@
 #include-once
 #include "../constants/constants.au3"
-#include "../LuxBot.au3"
 
 ; Add missing rarity constant at the top of the file
 Global Const $rarity_gray = 2620
