@@ -109,15 +109,32 @@ Func PickUpLoot()
         If $aItemAgentID = 0 Then ContinueLoop ; If Item is not on the ground
 
         If CanPickUp($aItemPtr) Then
-			If GetIsDead(-2) Then Exitloop
-            PickUpItem($aItemAgentID)
-            Local $lDeadlock = TimerInit()
-			If GetIsDead(-2) Then Exitloop
-            While GetItemAgentExists($aItemAgentID)
-                Sleep(100)
-                If GetIsDead(-2) Then Exitloop
-                If TimerDiff($lDeadlock) > 10000 Then ExitLoop
-            WEnd
+			; --- Gold pickup logic ---
+			Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
+			If $lModelID = 2511 Then ; Gold coin model ID
+				Local $goldBefore = GetGoldCharacter()
+				PickUpItem($aItemAgentID)
+				Local $lDeadlock = TimerInit()
+				While GetItemAgentExists($aItemAgentID)
+					Sleep(100)
+					If GetIsDead(-2) Then Exitloop
+					If TimerDiff($lDeadlock) > 10000 Then ExitLoop
+				WEnd
+				Local $goldAfter = GetGoldCharacter()
+				Local $goldDiff = $goldAfter - $goldBefore
+				If $goldDiff > 0 And IsDeclared("$Stat_GoldPickedUp") Then
+					$Stat_GoldPickedUp += $goldDiff
+					If IsDeclared("UpdateStatisticsDisplay") Then UpdateStatisticsDisplay()
+				EndIf
+			Else
+				PickUpItem($aItemAgentID)
+				Local $lDeadlock = TimerInit()
+				While GetItemAgentExists($aItemAgentID)
+					Sleep(100)
+					If GetIsDead(-2) Then Exitloop
+					If TimerDiff($lDeadlock) > 10000 Then ExitLoop
+				WEnd
+			EndIf
         EndIf
     Next
 EndFunc   ;==>PickUpLoot

@@ -86,11 +86,14 @@ Global $Stat_Whites = 0
 Global $Stat_LuxonFaction = 0
 Global $Stat_LuxonFactionMax = 0
 Global $Stat_LuxonDonated = 0
+Global $Stat_CurrentGold = 0
+Global $Stat_GoldPickedUp = 0
 
 ; --- Statistics label variables ---
 Global $StatDeathsLabel, $StatTotalRunsLabel, $StatTotalRunTimeLabel, $StatAvgRunTimeLabel
 Global $StatGoldsLabel, $StatPurplesLabel, $StatBluesLabel, $StatWhitesLabel
 Global $StatLuxonFactionLabel, $StatLuxonDonatedLabel
+Global $StatCurrentGoldLabel, $StatGoldPickedUpLabel
 #EndRegion Declaration
 
 #Region ### START Koda GUI section ### Form=
@@ -123,6 +126,23 @@ GUICtrlSetBkColor($GUIDonateFactionButton, 0xFF0000) ; Red background
 GUICtrlSetColor($GUIDonateFactionButton, 0xFFFFFF) ; White text
 $gOnTopCheckbox = GUICtrlCreateCheckbox("On Top", 250, 103, 81, 24)
 GUICtrlSetState(-1, $GUI_CHECKED)
+
+; Statistics group (moved inside Character tab only)
+$GroupStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 160)
+$StatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 60, 150, 20)
+$StatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 80, 150, 20)
+$StatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 100, 150, 20)
+$StatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 120, 150, 20)
+$StatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
+$StatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
+$StatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
+$StatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
+$StatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 140, 200, 20)
+$StatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
+$StatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: 0", 420, 160, 150, 20)
+$StatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: 0", 600, 160, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Tab 2: Skillbar and Combat
@@ -452,20 +472,6 @@ InitializeSkillNames()
 ; Initialize statistics display
 UpdateStatisticsDisplay()
 
-; Statistics group
-$GroupStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 120)
-$StatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 60, 150, 20)
-$StatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 80, 150, 20)
-$StatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 100, 150, 20)
-$StatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 120, 150, 20)
-$StatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
-$StatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
-$StatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
-$StatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
-$StatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 140, 200, 20)
-$StatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
 #EndRegion ### END Koda GUI section ###
 
 Func GuiButtonHandler()
@@ -502,6 +508,11 @@ Func GuiButtonHandler()
             $BotInitialized = True
             ; Update skillbar display after initialization
             UpdateSkillbarDisplay()
+            ; Update Luxon faction stats after initialization
+            $Stat_LuxonFaction = GetLuxonFaction()
+            $Stat_LuxonFactionMax = GetMaxLuxonFaction()
+            $Stat_CurrentGold = GetGoldCharacter()
+            UpdateStatisticsDisplay()
 
         Case $GUIStartBotButton
             If Not $BotInitialized Then
@@ -1141,6 +1152,10 @@ Func DonateFactionManual()
         RndSleep(500)
         $donations += 1
         Out("Donation " & $donations & " completed. Current faction: " & GetLuxonFaction())
+        ; Update Luxon faction stats after each donation
+        $Stat_LuxonFaction = GetLuxonFaction()
+        $Stat_LuxonFactionMax = GetMaxLuxonFaction()
+        UpdateStatisticsDisplay()
     WEnd
     
     Out("Faction donation complete! Total donations: " & $donations)
@@ -1154,6 +1169,10 @@ Func DonateFactionManual()
     RndSleep(500)
     
     Out("Manual faction donation finished")
+    ; Update Luxon faction stats after donation process
+    $Stat_LuxonFaction = GetLuxonFaction()
+    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
+    UpdateStatisticsDisplay()
 EndFunc
 
 Func RndTravel($aMapID)
@@ -1416,6 +1435,11 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
 	
 	; Add a random game joke after successful completion
 	Out("🎮 " & GetRandomGameJoke())
+	; Update Luxon faction stats after every fight
+	$Stat_LuxonFaction = GetLuxonFaction()
+	$Stat_LuxonFactionMax = GetMaxLuxonFaction()
+	$Stat_CurrentGold = GetGoldCharacter()
+	UpdateStatisticsDisplay()
 	
 	Return True
 EndFunc
@@ -2373,5 +2397,7 @@ Func UpdateStatisticsDisplay()
     GUICtrlSetData($StatWhitesLabel, "Whites picked up: " & $Stat_Whites)
     GUICtrlSetData($StatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
     GUICtrlSetData($StatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+    GUICtrlSetData($StatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+    GUICtrlSetData($StatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
 EndFunc
 
