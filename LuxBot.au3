@@ -1047,34 +1047,7 @@ EndFunc
 ; --- PATCHES ---
 ; Patch EnsureInFortAspenwoodLuxon
 Func EnsureInFortAspenwoodLuxon()
-    ; Check if we're already in Mount Qinkai (map 200)
-    If GetMapID() = 200 Then
-        If $ReturningToTown Then
-            Out("Returning to town after vanquish, not starting new vanquish yet.")
-            Return
-        EndIf
-        If $CameFromTown Then
-            Out("Arrived in Mount Qinkai from town, starting vanquish from index 0!")
-            $CameFromTown = False
-            $VanquishInProgress = True
-            $CurrentVanquishIndex = 0 ; Always start from 0 when from town
-            VanquishMountQinkai()
-            $VanquishInProgress = False
-            $LastVanquishComplete = TimerInit()
-            Return
-        ElseIf Not $VanquishInProgress Then
-            Out("Already in Mount Qinkai (map 200), starting vanquish!")
-            $VanquishInProgress = True
-            VanquishMountQinkai()
-            $VanquishInProgress = False
-            $LastVanquishComplete = TimerInit()
-            Return
-        Else
-            Out("Vanquish already in progress, waiting...")
-            Return
-        EndIf
-    EndIf
-    
+    ; Always restart from Fort Aspenwood when starting the bot
     ; Check if we recently completed a vanquish (prevent immediate restart)
     If TimerDiff($LastVanquishComplete) < 10000 Then ; Wait 10 seconds after vanquish completion
         Out("Recently completed vanquish, waiting before restart...")
@@ -1106,6 +1079,7 @@ Func EnsureInFortAspenwoodLuxon()
         RndSleep(500)
     EndIf
     
+    ; Always travel to Fort Aspenwood and start the process from there
     If GetMapID() <> $MAP_ID_FORT_ASPENWOOD_LUXON Then
         SetHardModeForTravel()
         $CameFromTown = True
@@ -1365,7 +1339,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     Local $lEnemyCount = 0
     Local $lDestinationReached = False
     Local $lInCombat = False
-    Local $stepSize = 5000 ; units per step for smooth movement
+    Local $stepSize = 2500 ; units per step for smooth movement
     Local $lastMoveToX = $aX
     Local $lastMoveToY = $aY
     ; Log the action
@@ -1655,10 +1629,14 @@ Func VanquishMountQinkai()
 	; Otherwise, find the closest point to start from
 	If $cameFromTown Then
 		Out("Came from town with blessing, starting vanquish from index 0")
+		; Move to blessing coordinates and take blessing
+		Move(-8394, -9801)
+		RndSleep(2000)
+		Out('Taking blessing')
+		RndSleep(1000)
 		; Reset vanquish index to 0 for fresh start
 		$CurrentVanquishIndex = 0
 		Out("Reset CurrentVanquishIndex to 0 for fresh vanquish start")
-		
 		; Start the loop from the beginning (index 0)
 		For $i = 0 To UBound($vanquishLocations) - 1
 			Local $targetX = $vanquishLocations[$i][0]
@@ -2273,51 +2251,31 @@ EndFunc
 Func UseCustomFightingOrder($lTarget)
     ; Check if we have any skills in custom order
     If $CustomFightingCount <= 0 Then
-        Out("No skills in custom fighting order")
         ; Still attack even if no skills available
         Attack($lTarget)
         Return
     EndIf
-    
     ; Use skills in the custom fighting order
     Local $skillSlot = $CustomFightingOrder[$CurrentCustomSkillIndex]
     Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$skillSlot - 1]) = $GUI_CHECKED
     Local $skillRecharged = IsRecharged($skillSlot)
     Local $skillEnergy = GetEnergy(-2)
     Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($skillSlot))
-    
     If $skillEnabled And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
         ; Use the skill
-        Local $skillID = GetSkillbarSkillID($skillSlot)
-        Local $skillName = GetSkillNameFromArray($skillID)
-        Out("Using custom skill " & $skillSlot & ": " & $skillName & " (ID: " & $skillID & ")")
         UseSkillEx($skillSlot, $lTarget, 3000, True)
+        HighlightSkillLabel($skillSlot)
         RndSleep(200)
-        
-        ; Move to next skill in custom order (with safety check)
         $CurrentCustomSkillIndex += 1
         If $CurrentCustomSkillIndex >= $CustomFightingCount Then
             $CurrentCustomSkillIndex = 0 ; Reset to beginning
         EndIf
     Else
-        ; Skip this skill and move to next (with safety check)
         $CurrentCustomSkillIndex += 1
         If $CurrentCustomSkillIndex >= $CustomFightingCount Then
             $CurrentCustomSkillIndex = 0 ; Reset to beginning
         EndIf
-        
-        ; Debug output for why skill wasn't used
-        Local $skillID = GetSkillbarSkillID($skillSlot)
-        Local $skillName = GetSkillNameFromArray($skillID)
-        If Not $skillEnabled Then
-            Out("Custom skill " & $skillSlot & " (" & $skillName & ") disabled")
-        ElseIf Not $skillRecharged Then
-            Out("Custom skill " & $skillSlot & " (" & $skillName & ") not recharged")
-        ElseIf $skillEnergy < $skillEnergyReq Then
-            Out("Custom skill " & $skillSlot & " (" & $skillName & ") not enough energy (" & $skillEnergy & "/" & $skillEnergyReq & ")")
-        EndIf
     EndIf
-    
     ; Always attack the target (auto-attack) even if skills aren't available
     Attack($lTarget)
 EndFunc
@@ -2330,20 +2288,14 @@ Func UsePrioritySkills($lTarget)
         Local $skillRecharged = IsRecharged($i)
         Local $skillEnergy = GetEnergy(-2)
         Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($i))
-        
-        ; If it's a priority skill and can be used, use it
         If $skillPriority And $skillEnabled And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
-            Local $skillID = GetSkillbarSkillID($i)
-            Local $skillName = GetSkillNameFromArray($skillID)
-            Out("Using priority skill " & $i & ": " & $skillName & " (ID: " & $skillID & ")")
             UseSkillEx($i, $lTarget, 3000, True)
+            HighlightSkillLabel($i)
             RndSleep(200)
-            ; Attack the target after using priority skill
             Attack($lTarget)
             Return ; Exit after using one priority skill
         EndIf
     Next
-    
     ; If no priority skills available, use normal skills
     For $i = 1 To 8
         Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$i-1]) = $GUI_CHECKED
@@ -2351,22 +2303,15 @@ Func UsePrioritySkills($lTarget)
         Local $skillRecharged = IsRecharged($i)
         Local $skillEnergy = GetEnergy(-2)
         Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($i))
-        
-        ; Use non-priority skills that are enabled and ready
         If $skillEnabled And Not $skillPriority And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
-            Local $skillID = GetSkillbarSkillID($i)
-            Local $skillName = GetSkillNameFromArray($skillID)
-            Out("Using normal skill " & $i & ": " & $skillName & " (ID: " & $skillID & ")")
             UseSkillEx($i, $lTarget, 3000, True)
+            HighlightSkillLabel($i)
             RndSleep(200)
-            ; Attack the target after using normal skill
             Attack($lTarget)
             Return ; Exit after using one skill
         EndIf
     Next
-    
     ; If no skills are available, still attack the target
-    Out("No skills available, using auto-attack only")
     Attack($lTarget)
 EndFunc
 
@@ -2495,5 +2440,44 @@ Func UpdateExtraStatisticsDisplay()
     GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
     GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
     GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+EndFunc
+
+; Helper to highlight a skill label when used
+Func HighlightSkillLabel($slot)
+    GUICtrlSetBkColor($SkillLabels[$slot-1], 0xFFFF00) ; Yellow
+    AdlibRegister("_UnhighlightSkillLabel" & $slot, 200)
+EndFunc
+
+Func _UnhighlightSkillLabel1()
+    GUICtrlSetBkColor($SkillLabels[0], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel1")
+EndFunc
+Func _UnhighlightSkillLabel2()
+    GUICtrlSetBkColor($SkillLabels[1], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel2")
+EndFunc
+Func _UnhighlightSkillLabel3()
+    GUICtrlSetBkColor($SkillLabels[2], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel3")
+EndFunc
+Func _UnhighlightSkillLabel4()
+    GUICtrlSetBkColor($SkillLabels[3], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel4")
+EndFunc
+Func _UnhighlightSkillLabel5()
+    GUICtrlSetBkColor($SkillLabels[4], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel5")
+EndFunc
+Func _UnhighlightSkillLabel6()
+    GUICtrlSetBkColor($SkillLabels[5], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel6")
+EndFunc
+Func _UnhighlightSkillLabel7()
+    GUICtrlSetBkColor($SkillLabels[6], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel7")
+EndFunc
+Func _UnhighlightSkillLabel8()
+    GUICtrlSetBkColor($SkillLabels[7], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel8")
 EndFunc
 
