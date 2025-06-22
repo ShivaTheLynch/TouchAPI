@@ -61,6 +61,7 @@ Global $WasDead = False ; Track if player was dead
 Global $CurrentVanquishIndex = 0 ; Track current position in vanquish loop
 Global $VanquishInProgress = False ; Track if vanquish is currently running
 Global $LastVanquishComplete = TimerInit() ; Track when last vanquish completed
+Global $ReturningToTown = False ; Prevent vanquish restart before returning to town
 
 ; Custom fighting system variables
 Global $CustomFightingOrder
@@ -1050,6 +1051,10 @@ EndFunc
 Func EnsureInFortAspenwoodLuxon()
     ; Check if we're already in Mount Qinkai (map 200)
     If GetMapID() = 200 Then
+        If $ReturningToTown Then
+            Out("Returning to town after vanquish, not starting new vanquish yet.")
+            Return
+        EndIf
         If $CameFromTown Then
             Out("Arrived in Mount Qinkai from town, starting vanquish from index 0!")
             $CameFromTown = False
