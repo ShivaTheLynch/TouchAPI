@@ -1365,7 +1365,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     Local $lEnemyCount = 0
     Local $lDestinationReached = False
     Local $lInCombat = False
-    Local $stepSize = 1000 ; units per step for smooth movement
+    Local $stepSize = 5000 ; units per step for smooth movement
     Local $lastMoveToX = $aX
     Local $lastMoveToY = $aY
     ; Log the action
