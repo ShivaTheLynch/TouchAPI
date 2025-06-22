@@ -94,9 +94,12 @@ Else
 EndIf
 $GUIRefreshButton = GUICtrlCreateButton("Refresh", 240, 66, 51, 17)
 GUICtrlSetOnEvent($GUIRefreshButton, "GuiButtonHandler")
-$GUIStartButton = GUICtrlCreateButton("Start", 32, 104, 75, 25)
-GUICtrlSetOnEvent($GUIStartButton, "GuiButtonHandler")
-$GUIDonateFactionButton = GUICtrlCreateButton("DONATE FACTION", 120, 104, 120, 25)
+$GUIInitializeButton = GUICtrlCreateButton("Initialize", 32, 104, 75, 25)
+GUICtrlSetOnEvent($GUIInitializeButton, "GuiButtonHandler")
+$GUIStartBotButton = GUICtrlCreateButton("Start Bot", 120, 104, 75, 25)
+GUICtrlSetOnEvent($GUIStartBotButton, "GuiButtonHandler")
+GUICtrlSetState($GUIStartBotButton, $GUI_DISABLE) ; Disabled until initialized
+$GUIDonateFactionButton = GUICtrlCreateButton("DONATE FACTION", 200, 104, 120, 25)
 GUICtrlSetOnEvent($GUIDonateFactionButton, "GuiButtonHandler")
 GUICtrlSetBkColor($GUIDonateFactionButton, 0xFF0000) ; Red background
 GUICtrlSetColor($GUIDonateFactionButton, 0xFFFFFF) ; White text
@@ -432,8 +435,8 @@ InitializeSkillNames()
 
 Func GuiButtonHandler()
     Switch @GUI_CtrlId
-        Case $GUIStartButton
-            Out("Initializing")
+        Case $GUIInitializeButton
+            Out("Initializing (connect only, not starting bot loop)")
             Local $charName = GUICtrlRead($GUINameCombo)
             If $charName=="" Then
                 If Initialize(ProcessExists("gw.exe"), True, False, False) = 0 Then
@@ -456,15 +459,23 @@ Func GuiButtonHandler()
                     _Exit()
                 EndIf
             EndIf
-            GUICtrlSetState($GUIStartButton, $GUI_Disable)
-			GUICtrlSetState($GUIRefreshButton, $GUI_Disable)
-            GUICtrlSetState($GUINameCombo, $GUI_Disable)
+            GUICtrlSetState($GUIInitializeButton, $GUI_DISABLE)
+            GUICtrlSetState($GUIRefreshButton, $GUI_DISABLE)
+            GUICtrlSetState($GUINameCombo, $GUI_DISABLE)
+            GUICtrlSetState($GUIStartBotButton, $GUI_ENABLE)
             WinSetTitle($MainGui, "", GetCharname() & " - Bot for test")
-            $BotRunning = True
             $BotInitialized = True
-            
             ; Update skillbar display after initialization
             UpdateSkillbarDisplay()
+
+        Case $GUIStartBotButton
+            If Not $BotInitialized Then
+                Out("Please initialize first before starting the bot loop.")
+                Return
+            EndIf
+            $BotRunning = True
+            GUICtrlSetState($GUIStartBotButton, $GUI_DISABLE)
+            Out("Bot loop started.")
 
         Case $GUIDonateFactionButton
             Out("Manual faction donation requested")
@@ -1133,8 +1144,8 @@ Func LuxonFarmSetup()
 	While (CountSlots() > 6)
 		If Not $BotRunning Then
 			Out("Bot Paused")
-			GUICtrlSetState($GUIStartButton, $GUI_ENABLE)
-			GUICtrlSetData($GUIStartButton, "Resume")
+			GUICtrlSetState($GUIStartBotButton, $GUI_ENABLE)
+			GUICtrlSetData($GUIStartBotButton, "Resume")
 			GUICtrlSetFont(-1, 10, 400, 0, "Times New Roman")
 			Return
 		EndIf
@@ -1150,8 +1161,8 @@ Func LuxonFarmSetup()
 	If (CountSlots() < 7) Then
 		If Not $BotRunning Then
 			Out("Bot Paused")
-			GUICtrlSetState($GUIStartButton, $GUI_ENABLE)
-			GUICtrlSetData($GUIStartButton, "Resume")
+			GUICtrlSetState($GUIStartBotButton, $GUI_ENABLE)
+			GUICtrlSetData($GUIStartBotButton, "Resume")
 			GUICtrlSetFont(-1, 10, 400, 0, "Times New Roman")
 			Return
 		EndIf
