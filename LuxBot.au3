@@ -86,6 +86,11 @@ Global $Stat_Whites = 0
 Global $Stat_LuxonFaction = 0
 Global $Stat_LuxonFactionMax = 0
 Global $Stat_LuxonDonated = 0
+
+; --- Statistics label variables ---
+Global $StatDeathsLabel, $StatTotalRunsLabel, $StatTotalRunTimeLabel, $StatAvgRunTimeLabel
+Global $StatGoldsLabel, $StatPurplesLabel, $StatBluesLabel, $StatWhitesLabel
+Global $StatLuxonFactionLabel, $StatLuxonDonatedLabel
 #EndRegion Declaration
 
 #Region ### START Koda GUI section ### Form=
