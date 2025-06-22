@@ -73,6 +73,19 @@ Global $CurrentCustomSkillIndex = 0 ; Current position in custom fighting order
 ; Global $SkillNameArray[10000] ; Large enough to hold all skill IDs
 
 Global $CameFromTown = False
+
+; --- Statistics variables ---
+Global $Stat_Deaths = 0
+Global $Stat_TotalRuns = 0
+Global $Stat_TotalRunTime = 0 ; in seconds
+Global $Stat_AvgRunTime = 0
+Global $Stat_Golds = 0
+Global $Stat_Purples = 0
+Global $Stat_Blues = 0
+Global $Stat_Whites = 0
+Global $Stat_LuxonFaction = 0
+Global $Stat_LuxonFactionMax = 0
+Global $Stat_LuxonDonated = 0
 #EndRegion Declaration
 
 #Region ### START Koda GUI section ### Form=
@@ -430,6 +443,23 @@ GUISetState(@SW_SHOW)
 
 ; Initialize skill names with placeholders
 InitializeSkillNames()
+
+; Initialize statistics display
+UpdateStatisticsDisplay()
+
+; Statistics group
+$GroupStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 120)
+$StatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 60, 150, 20)
+$StatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 80, 150, 20)
+$StatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 100, 150, 20)
+$StatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 120, 150, 20)
+$StatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
+$StatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
+$StatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
+$StatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
+$StatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 140, 200, 20)
+$StatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 #EndRegion ### END Koda GUI section ###
 
@@ -2325,5 +2355,18 @@ Func CheckAndResurrectPartyMembers()
 	EndIf
 	
 	Return True ; No dead members found
+EndFunc
+
+Func UpdateStatisticsDisplay()
+    GUICtrlSetData($StatDeathsLabel, "Deaths: " & $Stat_Deaths)
+    GUICtrlSetData($StatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+    GUICtrlSetData($StatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+    GUICtrlSetData($StatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+    GUICtrlSetData($StatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+    GUICtrlSetData($StatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+    GUICtrlSetData($StatBluesLabel, "Blues picked up: " & $Stat_Blues)
+    GUICtrlSetData($StatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+    GUICtrlSetData($StatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+    GUICtrlSetData($StatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
 EndFunc
 
