@@ -1265,6 +1265,15 @@ Func _Exit()
     Exit
 EndFunc
 
+; Utility function: Min of two values
+Func Min($a, $b)
+    If $a < $b Then
+        Return $a
+    Else
+        Return $b
+    EndIf
+EndFunc
+
 ; Function to get a random game joke
 Func GetRandomGameJoke()
     Local $jokes[] = [ _
@@ -1319,134 +1328,156 @@ EndFunc
 ;~ Description: Move to coordinates and kill all enemies in range
 ;~ Parameters: $aX, $aY = Target coordinates, $aDescription = Description for logging, $aRange = Attack range (default: $RANGE_SPELLCAST)
 Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
-	Local $lDeadlock = TimerInit()
-	Local $lMe = GetAgentPtr(-2)
-	Local $lTarget = 0
-	Local $lEnemyCount = 0
-	Local $lDestinationReached = False
-	Local $lInCombat = False
-	
-	; Log the action
-	If $aDescription <> "" Then
-		Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
-	Else
-		Out("Moving to kill enemies at (" & $aX & ", " & $aY & ")")
-	EndIf
-	
-	; Start moving to target location
-	MoveTo($aX, $aY, 50)
-	
-	; Main movement and combat loop
-	Do
-		; Check if we're dead
-		If GetIsDead($lMe) Then
-			Out("Player is dead, stopping combat")
-			Return False
-		EndIf
-		
-		; Check if we've reached the destination
-		If GetDistanceToXY($aX, $aY, $lMe) < 100 Then
-			$lDestinationReached = True
-		EndIf
-		
-		; Get number of enemies in range
-		$lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange) ; Use normal range for detection
-		
-		; PRIORITY: If enemies are found, fight them immediately (don't wait to reach coordinates)
-		If $lEnemyCount > 0 Then
-			If Not $lInCombat Then
-				Out("Found " & $lEnemyCount & " enemies, engaging combat immediately!")
-				$lInCombat = True
-			EndIf
-			
-			; Combat loop for current enemies - NO TIMEOUT, fight until all enemies are dead
-			Do
-				; Check if we're dead
-				If GetIsDead($lMe) Then
-					Out("Player is dead during combat")
-					Return False
-				EndIf
-				
-				; Get current enemy count
-				$lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange) ; Use normal range for detection
-				
-				; If no more enemies, break combat loop
-				If $lEnemyCount = 0 Then
-					Out("Combat complete, continuing movement to target")
-					$lInCombat = False
-					ExitLoop
-				EndIf
-				
-				; Get nearest enemy
-				$lTarget = GetNearestEnemyPtrToAgent(-2)
-				
-				; If we have a valid target
-				If $lTarget <> 0 And Not GetIsDead($lTarget) Then
-					; Change target to the enemy
-					ChangeTarget($lTarget)
-					RndSleep(100)
-					
-					; Attack the target (auto-attack)
-					Attack($lTarget)
-					RndSleep(100)
-					
-					; Use skills with priority and custom fighting order
-					UseSkillsWithPriorityAndCustomOrder($lTarget)
-					
-					; Wait a bit before next iteration
-					RndSleep(500)
-				Else
-					; No valid target, wait a bit
-					RndSleep(500)
-				EndIf
-				
-			Until False
-			
-			; Pick up loot after combat is complete
-			PickUpLoot()
-			
-			; Check for dead party members and resurrect them
-			Out("Checking for dead party members after combat...")
-			CheckAndResurrectPartyMembers()
-			
-			; After combat, continue moving if we haven't reached destination
-			If Not $lDestinationReached Then
-				Out("Resuming movement to target coordinates")
-				MoveTo($aX, $aY, 50)
-			EndIf
-		Else
-			; No enemies in range, continue movement if not at destination
-			If Not $lDestinationReached Then
-				; Only move if we're not in combat and not at destination
-				If Not $lInCombat Then
-					MoveTo($aX, $aY, 50)
-				EndIf
-			EndIf
-		EndIf
-		
-		; Check for overall timeout (60 seconds)
-		If TimerDiff($lDeadlock) > 60000 Then
-			Out("Movement timeout reached")
-			Return False
-		EndIf
-		
-		
-		; Small delay to prevent excessive CPU usage
-		RndSleep(200)
-		
-	Until $lDestinationReached
-	
-	Out("Reached destination at (" & $aX & ", " & $aY & ")")
-	
-	; Add a random game joke after successful completion
-	Out("🎮 " & GetRandomGameJoke())
-	; Update Luxon faction stats after every fight
-	$Stat_LuxonFaction = GetLuxonFaction()
-	$Stat_LuxonFactionMax = GetMaxLuxonFaction()
-	$Stat_CurrentGold = GetGoldCharacter()
-	UpdateStatisticsDisplay()
-	
-	Return True
+    Local $lDeadlock = TimerInit()
+    Local $lMe = GetAgentPtr(-2)
+    Local $lTarget = 0
+    Local $lEnemyCount = 0
+    Local $lDestinationReached = False
+    Local $lInCombat = False
+    Local $stepSize = 100 ; units per step for smooth movement
+
+    ; Log the action
+    If $aDescription <> "" Then
+        Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
+    Else
+        Out("Moving to kill enemies at (" & $aX & ", " & $aY & ")")
+    EndIf
+
+    ; Smooth movement loop: move in small steps, check for enemies after each step
+    While Not $lDestinationReached
+        If GetIsDead($lMe) Then
+            Out("Player is dead, stopping combat")
+            Return False
+        EndIf
+        Local $curX = X(-2)
+        Local $curY = Y(-2)
+        Local $dist = GetDistanceToXY($aX, $aY, -2)
+        If $dist < 100 Then
+            $lDestinationReached = True
+            ExitLoop
+        EndIf
+        ; Check for enemies in range
+        $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange)
+        If $lEnemyCount > 0 Then
+            ExitLoop ; Break movement and start combat immediately
+        EndIf
+        ; Calculate direction and move a small step
+        Local $dx = $aX - $curX
+        Local $dy = $aY - $curY
+        Local $len = Sqrt($dx * $dx + $dy * $dy)
+        If $len = 0 Then
+            $lDestinationReached = True
+            ExitLoop
+        EndIf
+        Local $stepX = $curX + ($dx / $len) * Min($stepSize, $len)
+        Local $stepY = $curY + ($dy / $len) * Min($stepSize, $len)
+        MoveTo($stepX, $stepY, 50)
+        ; No unnecessary sleep, keep movement smooth
+    WEnd
+
+    ; Main movement and combat loop
+    Do
+        If GetIsDead($lMe) Then
+            Out("Player is dead, stopping combat")
+            Return False
+        EndIf
+        If GetDistanceToXY($aX, $aY, $lMe) < 100 Then
+            $lDestinationReached = True
+        EndIf
+        $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange)
+        If $lEnemyCount > 0 Then
+            If Not $lInCombat Then
+                Out("Found " & $lEnemyCount & " enemies, engaging combat immediately!")
+                $lInCombat = True
+            EndIf
+            ; Combat loop for current enemies - NO TIMEOUT, fight until all enemies are dead
+            Do
+                If GetIsDead($lMe) Then
+                    Out("Player is dead during combat")
+                    Return False
+                EndIf
+                $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange)
+                If $lEnemyCount = 0 Then
+                    Out("Combat complete, continuing movement to target")
+                    $lInCombat = False
+                    ExitLoop
+                EndIf
+                $lTarget = GetNearestEnemyPtrToAgent(-2)
+                If $lTarget <> 0 And Not GetIsDead($lTarget) Then
+                    ChangeTarget($lTarget)
+                    Attack($lTarget)
+                    ; Only use skills if within spell range
+                    If GetDistance($lTarget, -2) <= $RANGE_SPELLCAST Then
+                        UseSkillsWithPriorityAndCustomOrder($lTarget)
+                    EndIf
+                EndIf
+            Until False
+            PickUpLoot()
+            Out("Checking for dead party members after combat...")
+            CheckAndResurrectPartyMembers()
+            ; After combat, resume smooth movement if not at destination
+            If Not $lDestinationReached Then
+                While Not $lDestinationReached
+                    If GetIsDead($lMe) Then
+                        Out("Player is dead, stopping combat")
+                        Return False
+                    EndIf
+                    Local $curX = X(-2)
+                    Local $curY = Y(-2)
+                    Local $dist = GetDistanceToXY($aX, $aY, -2)
+                    If $dist < 100 Then
+                        $lDestinationReached = True
+                        ExitLoop
+                    EndIf
+                    $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange)
+                    If $lEnemyCount > 0 Then
+                        ExitLoop ; Break movement and start combat again
+                    EndIf
+                    Local $dx = $aX - $curX
+                    Local $dy = $aY - $curY
+                    Local $len = Sqrt($dx * $dx + $dy * $dy)
+                    If $len = 0 Then
+                        $lDestinationReached = True
+                        ExitLoop
+                    EndIf
+                    Local $stepX = $curX + ($dx / $len) * Min($stepSize, $len)
+                    Local $stepY = $curY + ($dy / $len) * Min($stepSize, $len)
+                    MoveTo($stepX, $stepY, 50)
+                WEnd
+            EndIf
+        Else
+            If Not $lDestinationReached Then
+                If Not $lInCombat Then
+                    Local $curX = X(-2)
+                    Local $curY = Y(-2)
+                    Local $dist = GetDistanceToXY($aX, $aY, -2)
+                    If $dist < 100 Then
+                        $lDestinationReached = True
+                    Else
+                        Local $dx = $aX - $curX
+                        Local $dy = $aY - $curY
+                        Local $len = Sqrt($dx * $dx + $dy * $dy)
+                        If $len > 0 Then
+                            Local $stepX = $curX + ($dx / $len) * Min($stepSize, $len)
+                            Local $stepY = $curY + ($dy / $len) * Min($stepSize, $len)
+                            MoveTo($stepX, $stepY, 50)
+                        EndIf
+                    EndIf
+                EndIf
+            EndIf
+        EndIf
+        If TimerDiff($lDeadlock) > 60000 Then
+            Out("Movement timeout reached")
+            Return False
+        EndIf
+    Until $lDestinationReached
+    Out("Reached destination at (" & $aX & ", " & $aY & ")")
+    Out("🎮 " & GetRandomGameJoke())
+    $Stat_LuxonFaction = GetLuxonFaction()
+    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
+    $Stat_CurrentGold = GetGoldCharacter()
+    UpdateStatisticsDisplay()
+    Return True
 EndFunc
 
 ;~ Vanquish the map
@@ -1746,10 +1777,16 @@ Func VanquishMountQinkai()
 			; Small delay between locations
 			RndSleep(1000)
 		Next
-	EndIf
-	
-	; If we didn't come from town, find the closest point to start from
-	If Not $cameFromTown Then
+		; After finishing all locations, return to town and exit
+		Out("Vanquish complete! Traveling back to Fort Aspenwood to restart...")
+		RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
+		WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
+		RndSleep(2000)
+		$LastVanquishComplete = TimerInit()
+		Out("Successfully returned to Fort Aspenwood. Restarting vanquish process...")
+		Return 0
+	Else
+		; If we didn't come from town, find the closest point to start from
 		Out("Already in Mount Qinkai away from spawn, finding closest starting point...")
 		
 		; Find the closest target from current position from ALL locations
