@@ -62,6 +62,7 @@ Global $CurrentVanquishIndex = 0 ; Track current position in vanquish loop
 Global $VanquishInProgress = False ; Track if vanquish is currently running
 Global $LastVanquishComplete = TimerInit() ; Track when last vanquish completed
 Global $ReturningToTown = False ; Prevent vanquish restart before returning to town
+Global $ReadyToStartRun = False ; Flag to track when bot is ready to start a new run
 
 ; Custom fighting system variables
 Global $CustomFightingOrder
@@ -242,7 +243,7 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Extra statistics group (styled like Character tab)
 $GroupExtraStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 180)
-$ExtraStatCoordsLabel = GUICtrlCreateLabel("Coords: (0, 0)", 420, 60, 200, 20)
+$ExtraStatCoordsLabel = GUICtrlCreateLabel("Coords: (0, 0)", 420, 60, 300, 20)
 $ExtraStatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 80, 150, 20)
 $ExtraStatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 100, 150, 20)
 $ExtraStatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 120, 150, 20)
@@ -251,15 +252,15 @@ $ExtraStatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20
 $ExtraStatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
 $ExtraStatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
 $ExtraStatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
-$ExtraStatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 160, 200, 20)
-$ExtraStatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
-$ExtraStatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: 0", 420, 180, 150, 20)
-$ExtraStatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: 0", 600, 160, 150, 20)
+$ExtraStatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax, 420, 160, 200, 20)
+$ExtraStatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: " & $Stat_LuxonDonated, 600, 140, 150, 20)
+$ExtraStatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: " & $Stat_CurrentGold, 420, 180, 150, 20)
+$ExtraStatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: " & $Stat_GoldPickedUp, 600, 160, 150, 20)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Tab 5: Run Options & Loot
 GUICtrlCreateTabItem("Settings")
-$Group4 = GUICtrlCreateGroup("Run Options", 16, 40, 380, 120)
+$Group4 = GUICtrlCreateGroup("Run Options", 16, 40, 370, 140)
 
 ; Hard Mode toggle
 $GUIHardModeCheckbox = GUICtrlCreateCheckbox("Hard Mode (HM)", 32, 64, 150, 20)
@@ -285,137 +286,130 @@ GUICtrlSetOnEvent($GUIAutoDropCheckbox, "GuiButtonHandler")
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Loot Options Group
-$Group5 = GUICtrlCreateGroup("Loot Filter Options", 16, 180, 760, 380)
+; Loot Options Group (move down for more space)
+$Group5 = GUICtrlCreateGroup("Loot Filter Options", 16, 190, 370, 370)
 
-; Rarity filters
-$LootRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 204, 350, 120)
-$GUIPickupGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 48, 228, 150, 20)
+; Rarity filters (move down)
+$LootRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 214, 160, 160)
+$GUIPickupGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 40, 234, 140, 20)
 GUICtrlSetState($GUIPickupGoldCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupGoldCheckbox, "GuiButtonHandler")
 
-$GUIPickupPurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 252, 150, 20)
+$GUIPickupPurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 40, 254, 140, 20)
 GUICtrlSetState($GUIPickupPurpleCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupPurpleCheckbox, "GuiButtonHandler")
 
-$GUIPickupBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 276, 150, 20)
+$GUIPickupBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 40, 274, 140, 20)
 GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupBlueCheckbox, "GuiButtonHandler")
 
-$GUIPickupGreenCheckbox = GUICtrlCreateCheckbox("Green Items (Uncommon)", 48, 300, 150, 20)
+$GUIPickupGreenCheckbox = GUICtrlCreateCheckbox("Green Items (Uncommon)", 40, 294, 140, 20)
 GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupGreenCheckbox, "GuiButtonHandler")
 
-$GUIPickupWhiteCheckbox = GUICtrlCreateCheckbox("White Items (Common)", 48, 324, 150, 20)
+$GUIPickupWhiteCheckbox = GUICtrlCreateCheckbox("White Items (Common)", 40, 314, 140, 20)
 GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED) ; Default to unchecked
 GUICtrlSetOnEvent($GUIPickupWhiteCheckbox, "GuiButtonHandler")
-
-$GUIPickupGrayCheckbox = GUICtrlCreateCheckbox("Gray Items (Junk)", 220, 228, 150, 20)
-GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED) ; Default to unchecked
-GUICtrlSetOnEvent($GUIPickupGrayCheckbox, "GuiButtonHandler")
-
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Special item filters
-$SpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 204, 350, 120)
-$GUIPickupMaterialsCheckbox = GUICtrlCreateCheckbox("Materials (Wood, Cloth, etc.)", 416, 228, 200, 20)
+; Special item filters (move right)
+$SpecialItemsGroup = GUICtrlCreateGroup("Special Items", 200, 214, 170, 160)
+$GUIPickupMaterialsCheckbox = GUICtrlCreateCheckbox("Materials (Wood, Cloth, etc.)", 210, 234, 150, 20)
 GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupMaterialsCheckbox, "GuiButtonHandler")
 
-$GUIPickupDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 416, 252, 150, 20)
+$GUIPickupDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 210, 254, 140, 20)
 GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupDyesCheckbox, "GuiButtonHandler")
 
-$GUIPickupKeysCheckbox = GUICtrlCreateCheckbox("Keys", 416, 276, 150, 20)
+$GUIPickupKeysCheckbox = GUICtrlCreateCheckbox("Keys", 210, 274, 140, 20)
 GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupKeysCheckbox, "GuiButtonHandler")
 
-$GUIPickupScrollsCheckbox = GUICtrlCreateCheckbox("Scrolls", 416, 300, 150, 20)
+$GUIPickupScrollsCheckbox = GUICtrlCreateCheckbox("Scrolls", 210, 294, 140, 20)
 GUICtrlSetState($GUIPickupScrollsCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupScrollsCheckbox, "GuiButtonHandler")
 
-$GUIPickupConsumablesCheckbox = GUICtrlCreateCheckbox("Consumables", 416, 324, 150, 20)
+$GUIPickupConsumablesCheckbox = GUICtrlCreateCheckbox("Consumables", 210, 314, 140, 20)
 GUICtrlSetState($GUIPickupConsumablesCheckbox, $GUI_CHECKED)
 GUICtrlSetOnEvent($GUIPickupConsumablesCheckbox, "GuiButtonHandler")
-
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Weapon type filters
-$WeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 340, 350, 120)
-$GUIPickupSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 48, 364, 100, 20)
-GUICtrlSetState($GUIPickupSwordsCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupSwordsCheckbox, "GuiButtonHandler")
+; Weapon type filters (move below)
+; (Delete the following block)
+; $WeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 380, 340, 120)
+; $GUIPickupSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 40, 400, 100, 20)
+; GUICtrlSetState($GUIPickupSwordsCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupSwordsCheckbox, "GuiButtonHandler")
 
-$GUIPickupAxesCheckbox = GUICtrlCreateCheckbox("Axes", 48, 388, 100, 20)
-GUICtrlSetState($GUIPickupAxesCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupAxesCheckbox, "GuiButtonHandler")
+; $GUIPickupAxesCheckbox = GUICtrlCreateCheckbox("Axes", 40, 420, 100, 20)
+; GUICtrlSetState($GUIPickupAxesCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupAxesCheckbox, "GuiButtonHandler")
 
-$GUIPickupHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 48, 412, 100, 20)
-GUICtrlSetState($GUIPickupHammersCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupHammersCheckbox, "GuiButtonHandler")
+; $GUIPickupHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 40, 440, 100, 20)
+; GUICtrlSetState($GUIPickupHammersCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupHammersCheckbox, "GuiButtonHandler")
 
-$GUIPickupDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 48, 436, 100, 20)
-GUICtrlSetState($GUIPickupDaggersCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupDaggersCheckbox, "GuiButtonHandler")
+; $GUIPickupDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 40, 460, 100, 20)
+; GUICtrlSetState($GUIPickupDaggersCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupDaggersCheckbox, "GuiButtonHandler")
 
-$GUIPickupScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 48, 460, 100, 20)
-GUICtrlSetState($GUIPickupScythesCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupScythesCheckbox, "GuiButtonHandler")
+; $GUIPickupScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 150, 400, 100, 20)
+; GUICtrlSetState($GUIPickupScythesCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupScythesCheckbox, "GuiButtonHandler")
 
-$GUIPickupBowsCheckbox = GUICtrlCreateCheckbox("Bows", 160, 364, 100, 20)
-GUICtrlSetState($GUIPickupBowsCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupBowsCheckbox, "GuiButtonHandler")
+; $GUIPickupBowsCheckbox = GUICtrlCreateCheckbox("Bows", 150, 420, 100, 20)
+; GUICtrlSetState($GUIPickupBowsCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupBowsCheckbox, "GuiButtonHandler")
 
-$GUIPickupWandsCheckbox = GUICtrlCreateCheckbox("Wands", 160, 388, 100, 20)
-GUICtrlSetState($GUIPickupWandsCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupWandsCheckbox, "GuiButtonHandler")
+; $GUIPickupWandsCheckbox = GUICtrlCreateCheckbox("Wands", 150, 440, 100, 20)
+; GUICtrlSetState($GUIPickupWandsCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupWandsCheckbox, "GuiButtonHandler")
 
-$GUIPickupStavesCheckbox = GUICtrlCreateCheckbox("Staves", 160, 412, 100, 20)
-GUICtrlSetState($GUIPickupStavesCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupStavesCheckbox, "GuiButtonHandler")
+; $GUIPickupStavesCheckbox = GUICtrlCreateCheckbox("Staves", 150, 460, 100, 20)
+; GUICtrlSetState($GUIPickupStavesCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupStavesCheckbox, "GuiButtonHandler")
 
-$GUIPickupShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 160, 436, 100, 20)
-GUICtrlSetState($GUIPickupShieldsCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupShieldsCheckbox, "GuiButtonHandler")
+; $GUIPickupShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 260, 400, 100, 20)
+; GUICtrlSetState($GUIPickupShieldsCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupShieldsCheckbox, "GuiButtonHandler")
 
-$GUIPickupFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 160, 460, 100, 20)
-GUICtrlSetState($GUIPickupFocusItemsCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupFocusItemsCheckbox, "GuiButtonHandler")
+; $GUIPickupFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 260, 420, 100, 20)
+; GUICtrlSetState($GUIPickupFocusItemsCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupFocusItemsCheckbox, "GuiButtonHandler")
 
-$GUIPickupArmorCheckbox = GUICtrlCreateCheckbox("Armor", 272, 364, 100, 20)
-GUICtrlSetState($GUIPickupArmorCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupArmorCheckbox, "GuiButtonHandler")
+; $GUIPickupArmorCheckbox = GUICtrlCreateCheckbox("Armor", 260, 440, 100, 20)
+; GUICtrlSetState($GUIPickupArmorCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupArmorCheckbox, "GuiButtonHandler")
 
-$GUIPickupRunesCheckbox = GUICtrlCreateCheckbox("Runes", 272, 388, 100, 20)
-GUICtrlSetState($GUIPickupRunesCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupRunesCheckbox, "GuiButtonHandler")
+; $GUIPickupRunesCheckbox = GUICtrlCreateCheckbox("Runes", 260, 460, 100, 20)
+; GUICtrlSetState($GUIPickupRunesCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupRunesCheckbox, "GuiButtonHandler")
 
-$GUIPickupInsigniasCheckbox = GUICtrlCreateCheckbox("Insignias", 272, 412, 100, 20)
-GUICtrlSetState($GUIPickupInsigniasCheckbox, $GUI_CHECKED)
-GUICtrlSetOnEvent($GUIPickupInsigniasCheckbox, "GuiButtonHandler")
+; $GUIPickupInsigniasCheckbox = GUICtrlCreateCheckbox("Insignias", 260, 480, 100, 20)
+; GUICtrlSetState($GUIPickupInsigniasCheckbox, $GUI_CHECKED)
+; GUICtrlSetOnEvent($GUIPickupInsigniasCheckbox, "GuiButtonHandler")
+; GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
-; Quick selection buttons
-$QuickSelectionGroup = GUICtrlCreateGroup("Quick Selection", 400, 340, 350, 120)
-$GUIAllLootButton = GUICtrlCreateButton("Select All Loot", 416, 364, 100, 25)
+; Quick selection buttons (move to right column)
+$QuickSelectionGroup = GUICtrlCreateGroup("Quick Selection", 400, 190, 350, 120)
+$GUIAllLootButton = GUICtrlCreateButton("Select All Loot", 416, 214, 100, 25)
 GUICtrlSetOnEvent($GUIAllLootButton, "GuiButtonHandler")
 
-$GUINoLootButton = GUICtrlCreateButton("Deselect All Loot", 416, 394, 100, 25)
+$GUINoLootButton = GUICtrlCreateButton("Deselect All Loot", 416, 244, 100, 25)
 GUICtrlSetOnEvent($GUINoLootButton, "GuiButtonHandler")
 
-$GUIRareOnlyButton = GUICtrlCreateButton("Rare+ Only", 416, 424, 100, 25)
+$GUIRareOnlyButton = GUICtrlCreateButton("Rare+ Only", 416, 274, 100, 25)
 GUICtrlSetOnEvent($GUIRareOnlyButton, "GuiButtonHandler")
 
-$GUIWeaponsOnlyButton = GUICtrlCreateButton("Weapons Only", 530, 364, 100, 25)
+$GUIWeaponsOnlyButton = GUICtrlCreateButton("Weapons Only", 530, 214, 100, 25)
 GUICtrlSetOnEvent($GUIWeaponsOnlyButton, "GuiButtonHandler")
 
-$GUIMaterialsOnlyButton = GUICtrlCreateButton("Materials Only", 530, 394, 100, 25)
+$GUIMaterialsOnlyButton = GUICtrlCreateButton("Materials Only", 530, 244, 100, 25)
 GUICtrlSetOnEvent($GUIMaterialsOnlyButton, "GuiButtonHandler")
 
-$GUISpecialOnlyButton = GUICtrlCreateButton("Special Only", 530, 424, 100, 25)
+$GUISpecialOnlyButton = GUICtrlCreateButton("Special Only", 530, 274, 100, 25)
 GUICtrlSetOnEvent($GUISpecialOnlyButton, "GuiButtonHandler")
-
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
@@ -431,25 +425,25 @@ $GUISellPurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 112,
 $GUISellBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 136, 150, 20)
 $GUISellGreenCheckbox = GUICtrlCreateCheckbox("Green Items (Uncommon)", 48, 160, 150, 20)
 $GUISellWhiteCheckbox = GUICtrlCreateCheckbox("White Items (Common)", 220, 88, 150, 20)
-$GUISellGrayCheckbox = GUICtrlCreateCheckbox("Gray Items (Junk)", 220, 112, 150, 20)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Sell Weapon Types
-$SellWeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 200, 350, 180)
-$GUISellSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 48, 224, 100, 20)
-$GUISellAxesCheckbox = GUICtrlCreateCheckbox("Axes", 48, 248, 100, 20)
-$GUISellHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 48, 272, 100, 20)
-$GUISellDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 48, 296, 100, 20)
-$GUISellScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 48, 320, 100, 20)
-$GUISellBowsCheckbox = GUICtrlCreateCheckbox("Bows", 160, 224, 100, 20)
-$GUISellWandsCheckbox = GUICtrlCreateCheckbox("Wands", 160, 248, 100, 20)
-$GUISellStavesCheckbox = GUICtrlCreateCheckbox("Staves", 160, 272, 100, 20)
-$GUISellShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 160, 296, 100, 20)
-$GUISellFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 160, 320, 100, 20)
-$GUISellArmorCheckbox = GUICtrlCreateCheckbox("Armor", 272, 224, 100, 20)
-$GUISellRunesCheckbox = GUICtrlCreateCheckbox("Runes", 272, 248, 100, 20)
-$GUISellInsigniasCheckbox = GUICtrlCreateCheckbox("Insignias", 272, 272, 100, 20)
-GUICtrlCreateGroup("", -99, -99, 1, 1)
+; (Delete the following block)
+; $SellWeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 200, 350, 180)
+; $GUISellSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 48, 224, 100, 20)
+; $GUISellAxesCheckbox = GUICtrlCreateCheckbox("Axes", 48, 248, 100, 20)
+; $GUISellHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 48, 272, 100, 20)
+; $GUISellDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 48, 296, 100, 20)
+; $GUISellScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 48, 320, 100, 20)
+; $GUISellBowsCheckbox = GUICtrlCreateCheckbox("Bows", 160, 224, 100, 20)
+; $GUISellWandsCheckbox = GUICtrlCreateCheckbox("Wands", 160, 248, 100, 20)
+; $GUISellStavesCheckbox = GUICtrlCreateCheckbox("Staves", 160, 272, 100, 20)
+; $GUISellShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 160, 296, 100, 20)
+; $GUISellFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 160, 320, 100, 20)
+; $GUISellArmorCheckbox = GUICtrlCreateCheckbox("Armor", 272, 224, 100, 20)
+; $GUISellRunesCheckbox = GUICtrlCreateCheckbox("Runes", 272, 248, 100, 20)
+; $GUISellInsigniasCheckbox = GUICtrlCreateCheckbox("Insignias", 272, 272, 100, 20)
+; GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Sell Special Items
 $SellSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 320, 180)
@@ -458,6 +452,48 @@ $GUISellDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 416, 112, 150, 20)
 $GUISellKeysCheckbox = GUICtrlCreateCheckbox("Keys", 416, 136, 150, 20)
 $GUISellScrollsCheckbox = GUICtrlCreateCheckbox("Scrolls", 416, 160, 150, 20)
 $GUISellConsumablesCheckbox = GUICtrlCreateCheckbox("Consumables", 416, 184, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+; Tab 6: Salvage
+GUICtrlCreateTabItem("Salvage")
+$GroupSalvage = GUICtrlCreateGroup("Salvage Items", 16, 40, 760, 520)
+
+; Salvage Item Rarity
+$SalvageRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 350, 120)
+$GUISalvageGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 48, 88, 150, 20)
+$GUISalvagePurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 112, 150, 20)
+$GUISalvageBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 136, 150, 20)
+$GUISalvageGreenCheckbox = GUICtrlCreateCheckbox("Green Items (Uncommon)", 48, 160, 150, 20)
+$GUISalvageWhiteCheckbox = GUICtrlCreateCheckbox("White Items (Common)", 220, 88, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+; Salvage Weapon Types
+; (Delete the following block)
+; $SalvageWeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 200, 350, 180)
+; $GUISalvageSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 48, 224, 100, 20)
+; $GUISalvageAxesCheckbox = GUICtrlCreateCheckbox("Axes", 48, 248, 100, 20)
+; $GUISalvageHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 48, 272, 100, 20)
+; $GUISalvageDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 48, 296, 100, 20)
+; $GUISalvageScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 48, 320, 100, 20)
+; $GUISalvageBowsCheckbox = GUICtrlCreateCheckbox("Bows", 160, 224, 100, 20)
+; $GUISalvageWandsCheckbox = GUICtrlCreateCheckbox("Wands", 160, 248, 100, 20)
+; $GUISalvageStavesCheckbox = GUICtrlCreateCheckbox("Staves", 160, 272, 100, 20)
+; $GUISalvageShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 160, 296, 100, 20)
+; $GUISalvageFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 160, 320, 100, 20)
+; $GUISalvageArmorCheckbox = GUICtrlCreateCheckbox("Armor", 272, 224, 100, 20)
+; $GUISalvageRunesCheckbox = GUICtrlCreateCheckbox("Runes", 272, 248, 100, 20)
+; $GUISalvageInsigniasCheckbox = GUICtrlCreateCheckbox("Insignias", 272, 272, 100, 20)
+; GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+; Salvage Special Items
+$SalvageSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 320, 180)
+$GUISalvageMaterialsCheckbox = GUICtrlCreateCheckbox("Materials (Wood, Cloth, etc.)", 416, 88, 200, 20)
+$GUISalvageDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 416, 112, 150, 20)
+$GUISalvageKeysCheckbox = GUICtrlCreateCheckbox("Keys", 416, 136, 150, 20)
+$GUISalvageScrollsCheckbox = GUICtrlCreateCheckbox("Scrolls", 416, 160, 150, 20)
+$GUISalvageConsumablesCheckbox = GUICtrlCreateCheckbox("Consumables", 416, 184, 150, 20)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
@@ -472,6 +508,27 @@ InitializeSkillNames()
 UpdateStatisticsDisplay()
 
 #EndRegion ### END Koda GUI section ###
+
+; Function to check map and start vanquish only once at bot start
+Func CheckMapAndStartVanquish()
+    If GetMapID() = 200 Then
+        Out("Bot started in Mount Qinkai (map 200), continuing vanquish from here!")
+        $CameFromTown = False
+        $VanquishInProgress = True
+        VanquishMountQinkai()
+        $VanquishInProgress = False
+        $LastVanquishComplete = TimerInit()
+    Else
+        Out("Bot started in another map, traveling to Fort Aspenwood to start bot from there.")
+        SetHardModeForTravel()
+        $CameFromTown = True
+        RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
+        WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
+        RndSleep(500)
+        ; Set flag to start run after arriving in Fort Aspenwood
+        $ReadyToStartRun = True
+    EndIf
+EndFunc
 
 Func GuiButtonHandler()
     Switch @GUI_CtrlId
@@ -722,13 +779,6 @@ Func GuiButtonHandler()
                 Out("White items pickup disabled")
             EndIf
 
-        Case $GUIPickupGrayCheckbox
-            If GUICtrlRead($GUIPickupGrayCheckbox) = $GUI_CHECKED Then
-                Out("Gray items pickup enabled")
-            Else
-                Out("Gray items pickup disabled")
-            EndIf
-
         ; Special Items Handlers
         Case $GUIPickupMaterialsCheckbox
             If GUICtrlRead($GUIPickupMaterialsCheckbox) = $GUI_CHECKED Then
@@ -765,98 +815,6 @@ Func GuiButtonHandler()
                 Out("Consumables pickup disabled")
             EndIf
 
-        ; Weapon Type Handlers
-        Case $GUIPickupSwordsCheckbox
-            If GUICtrlRead($GUIPickupSwordsCheckbox) = $GUI_CHECKED Then
-                Out("Swords pickup enabled")
-            Else
-                Out("Swords pickup disabled")
-            EndIf
-
-        Case $GUIPickupAxesCheckbox
-            If GUICtrlRead($GUIPickupAxesCheckbox) = $GUI_CHECKED Then
-                Out("Axes pickup enabled")
-            Else
-                Out("Axes pickup disabled")
-            EndIf
-
-        Case $GUIPickupHammersCheckbox
-            If GUICtrlRead($GUIPickupHammersCheckbox) = $GUI_CHECKED Then
-                Out("Hammers pickup enabled")
-            Else
-                Out("Hammers pickup disabled")
-            EndIf
-
-        Case $GUIPickupDaggersCheckbox
-            If GUICtrlRead($GUIPickupDaggersCheckbox) = $GUI_CHECKED Then
-                Out("Daggers pickup enabled")
-            Else
-                Out("Daggers pickup disabled")
-            EndIf
-
-        Case $GUIPickupScythesCheckbox
-            If GUICtrlRead($GUIPickupScythesCheckbox) = $GUI_CHECKED Then
-                Out("Scythes pickup enabled")
-            Else
-                Out("Scythes pickup disabled")
-            EndIf
-
-        Case $GUIPickupBowsCheckbox
-            If GUICtrlRead($GUIPickupBowsCheckbox) = $GUI_CHECKED Then
-                Out("Bows pickup enabled")
-            Else
-                Out("Bows pickup disabled")
-            EndIf
-
-        Case $GUIPickupWandsCheckbox
-            If GUICtrlRead($GUIPickupWandsCheckbox) = $GUI_CHECKED Then
-                Out("Wands pickup enabled")
-            Else
-                Out("Wands pickup disabled")
-            EndIf
-
-        Case $GUIPickupStavesCheckbox
-            If GUICtrlRead($GUIPickupStavesCheckbox) = $GUI_CHECKED Then
-                Out("Staves pickup enabled")
-            Else
-                Out("Staves pickup disabled")
-            EndIf
-
-        Case $GUIPickupShieldsCheckbox
-            If GUICtrlRead($GUIPickupShieldsCheckbox) = $GUI_CHECKED Then
-                Out("Shields pickup enabled")
-            Else
-                Out("Shields pickup disabled")
-            EndIf
-
-        Case $GUIPickupFocusItemsCheckbox
-            If GUICtrlRead($GUIPickupFocusItemsCheckbox) = $GUI_CHECKED Then
-                Out("Focus items pickup enabled")
-            Else
-                Out("Focus items pickup disabled")
-            EndIf
-
-        Case $GUIPickupArmorCheckbox
-            If GUICtrlRead($GUIPickupArmorCheckbox) = $GUI_CHECKED Then
-                Out("Armor pickup enabled")
-            Else
-                Out("Armor pickup disabled")
-            EndIf
-
-        Case $GUIPickupRunesCheckbox
-            If GUICtrlRead($GUIPickupRunesCheckbox) = $GUI_CHECKED Then
-                Out("Runes pickup enabled")
-            Else
-                Out("Runes pickup disabled")
-            EndIf
-
-        Case $GUIPickupInsigniasCheckbox
-            If GUICtrlRead($GUIPickupInsigniasCheckbox) = $GUI_CHECKED Then
-                Out("Insignias pickup enabled")
-            Else
-                Out("Insignias pickup disabled")
-            EndIf
-
         ; Quick Selection Button Handlers
         Case $GUIAllLootButton
             ; Select all loot checkboxes
@@ -865,7 +823,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_CHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_CHECKED)
@@ -893,7 +850,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_UNCHECKED)
@@ -921,7 +877,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_CHECKED)
@@ -949,7 +904,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_UNCHECKED)
@@ -977,7 +931,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_CHECKED)
@@ -1005,7 +958,6 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupBlueCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupGreenCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupWhiteCheckbox, $GUI_UNCHECKED)
-            GUICtrlSetState($GUIPickupGrayCheckbox, $GUI_UNCHECKED)
             GUICtrlSetState($GUIPickupMaterialsCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupDyesCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupKeysCheckbox, $GUI_CHECKED)
@@ -1025,6 +977,167 @@ Func GuiButtonHandler()
             GUICtrlSetState($GUIPickupRunesCheckbox, $GUI_CHECKED)
             GUICtrlSetState($GUIPickupInsigniasCheckbox, $GUI_CHECKED)
             Out("Special items only selected")
+
+        Case $GUISalvageGoldCheckbox
+            If GUICtrlRead($GUISalvageGoldCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Gold items enabled")
+            Else
+                Out("Salvage Gold items disabled")
+            EndIf
+
+        Case $GUISalvagePurpleCheckbox
+            If GUICtrlRead($GUISalvagePurpleCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Purple items enabled")
+            Else
+                Out("Salvage Purple items disabled")
+            EndIf
+
+        Case $GUISalvageBlueCheckbox
+            If GUICtrlRead($GUISalvageBlueCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Blue items enabled")
+            Else
+                Out("Salvage Blue items disabled")
+            EndIf
+
+        Case $GUISalvageGreenCheckbox
+            If GUICtrlRead($GUISalvageGreenCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Green items enabled")
+            Else
+                Out("Salvage Green items disabled")
+            EndIf
+
+        Case $GUISalvageWhiteCheckbox
+            If GUICtrlRead($GUISalvageWhiteCheckbox) = $GUI_CHECKED Then
+                Out("Salvage White items enabled")
+            Else
+                Out("Salvage White items disabled")
+            EndIf
+
+        Case $GUISalvageMaterialsCheckbox
+            If GUICtrlRead($GUISalvageMaterialsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Materials pickup enabled")
+            Else
+                Out("Salvage Materials pickup disabled")
+            EndIf
+
+        Case $GUISalvageDyesCheckbox
+            If GUICtrlRead($GUISalvageDyesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Dyes pickup enabled")
+            Else
+                Out("Salvage Dyes pickup disabled")
+            EndIf
+
+        Case $GUISalvageKeysCheckbox
+            If GUICtrlRead($GUISalvageKeysCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Keys pickup enabled")
+            Else
+                Out("Salvage Keys pickup disabled")
+            EndIf
+
+        Case $GUISalvageScrollsCheckbox
+            If GUICtrlRead($GUISalvageScrollsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Scrolls pickup enabled")
+            Else
+                Out("Salvage Scrolls pickup disabled")
+            EndIf
+
+        Case $GUISalvageConsumablesCheckbox
+            If GUICtrlRead($GUISalvageConsumablesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Consumables pickup enabled")
+            Else
+                Out("Salvage Consumables pickup disabled")
+            EndIf
+
+        Case $GUISalvageSwordsCheckbox
+            If GUICtrlRead($GUISalvageSwordsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Swords pickup enabled")
+            Else
+                Out("Salvage Swords pickup disabled")
+            EndIf
+
+        Case $GUISalvageAxesCheckbox
+            If GUICtrlRead($GUISalvageAxesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Axes pickup enabled")
+            Else
+                Out("Salvage Axes pickup disabled")
+            EndIf
+
+        Case $GUISalvageHammersCheckbox
+            If GUICtrlRead($GUISalvageHammersCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Hammers pickup enabled")
+            Else
+                Out("Salvage Hammers pickup disabled")
+            EndIf
+
+        Case $GUISalvageDaggersCheckbox
+            If GUICtrlRead($GUISalvageDaggersCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Daggers pickup enabled")
+            Else
+                Out("Salvage Daggers pickup disabled")
+            EndIf
+
+        Case $GUISalvageScythesCheckbox
+            If GUICtrlRead($GUISalvageScythesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Scythes pickup enabled")
+            Else
+                Out("Salvage Scythes pickup disabled")
+            EndIf
+
+        Case $GUISalvageBowsCheckbox
+            If GUICtrlRead($GUISalvageBowsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Bows pickup enabled")
+            Else
+                Out("Salvage Bows pickup disabled")
+            EndIf
+
+        Case $GUISalvageWandsCheckbox
+            If GUICtrlRead($GUISalvageWandsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Wands pickup enabled")
+            Else
+                Out("Salvage Wands pickup disabled")
+            EndIf
+
+        Case $GUISalvageStavesCheckbox
+            If GUICtrlRead($GUISalvageStavesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Staves pickup enabled")
+            Else
+                Out("Salvage Staves pickup disabled")
+            EndIf
+
+        Case $GUISalvageShieldsCheckbox
+            If GUICtrlRead($GUISalvageShieldsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Shields pickup enabled")
+            Else
+                Out("Salvage Shields pickup disabled")
+            EndIf
+
+        Case $GUISalvageFocusItemsCheckbox
+            If GUICtrlRead($GUISalvageFocusItemsCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Focus items pickup enabled")
+            Else
+                Out("Salvage Focus items pickup disabled")
+            EndIf
+
+        Case $GUISalvageArmorCheckbox
+            If GUICtrlRead($GUISalvageArmorCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Armor pickup enabled")
+            Else
+                Out("Salvage Armor pickup disabled")
+            EndIf
+
+        Case $GUISalvageRunesCheckbox
+            If GUICtrlRead($GUISalvageRunesCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Runes pickup enabled")
+            Else
+                Out("Salvage Runes pickup disabled")
+            EndIf
+
+        Case $GUISalvageInsigniasCheckbox
+            If GUICtrlRead($GUISalvageInsigniasCheckbox) = $GUI_CHECKED Then
+                Out("Salvage Insignias pickup enabled")
+            Else
+                Out("Salvage Insignias pickup disabled")
+            EndIf
 
     EndSwitch
 EndFunc
@@ -1047,11 +1160,16 @@ EndFunc
 ; --- PATCHES ---
 ; Patch EnsureInFortAspenwoodLuxon
 Func EnsureInFortAspenwoodLuxon()
-    ; Always restart from Fort Aspenwood when starting the bot
-    ; Check if we recently completed a vanquish (prevent immediate restart)
-    If TimerDiff($LastVanquishComplete) < 10000 Then ; Wait 10 seconds after vanquish completion
-        Out("Recently completed vanquish, waiting before restart...")
-        Return
+    ; Always travel to Fort Aspenwood and start the process from there
+    If GetMapID() <> $MAP_ID_FORT_ASPENWOOD_LUXON Then
+        SetHardModeForTravel()
+        $CameFromTown = True
+        TravelTo($MAP_ID_FORT_ASPENWOOD_LUXON)
+    Else
+        ; Already in Fort Aspenwood, proceed to next process here
+        Out("We are in Fort Aspenwood! LETS ROCK!")
+        SetHardModeForTravel()
+        LuxonFarmSetup()
     EndIf
     
     ; Check faction every time we return to town
@@ -1078,18 +1196,6 @@ Func EnsureInFortAspenwoodLuxon()
         WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
         RndSleep(500)
     EndIf
-    
-    ; Always travel to Fort Aspenwood and start the process from there
-    If GetMapID() <> $MAP_ID_FORT_ASPENWOOD_LUXON Then
-        SetHardModeForTravel()
-        $CameFromTown = True
-        TravelTo($MAP_ID_FORT_ASPENWOOD_LUXON)
-    Else
-        ; Already in Fort Aspenwood, proceed to next process here
-        Out("We are in Fort Aspenwood! LETS ROCK!")
-        SetHardModeForTravel()
-        LuxonFarmSetup()
-    EndIf
 EndFunc
 
 ; Patch Inventory (TouchAddons)
@@ -1108,8 +1214,8 @@ Func DonateFactionManual()
     Local $currentFaction = GetLuxonFaction()
     Out("Current Luxon faction: " & $currentFaction)
     
-    If $currentFaction < 3000 Then
-        Out("Faction is below 3000, no donation needed")
+    If $currentFaction < 5000 Then
+        Out("Faction is below 5000, no donation needed")
         Return
     EndIf
     
@@ -1124,7 +1230,7 @@ Func DonateFactionManual()
     
     Out("Donating Luxon faction")
     Local $donations = 0
-    While GetLuxonFaction() >= 3000
+    While GetLuxonFaction() >= 5000
         DonateFaction('Luxon')
         RndSleep(500)
         $donations += 1
@@ -1170,6 +1276,38 @@ EndFunc   ;==>RndTravel
 While Not $BotRunning
     Sleep(100)
 WEnd
+
+; Call CheckMapAndStartVanquish() ONCE before entering the main bot loop
+CheckMapAndStartVanquish()
+
+While $BotRunning
+    Sleep(100) ; Reduced from 500ms to 100ms for more responsive updates
+    ; Auto-update skillbar if enabled
+    If GUICtrlRead($GUIAutoUpdateCheckbox) = $GUI_CHECKED And TimerDiff($LastSkillUpdate) > $SkillUpdateInterval Then
+        UpdateSkillbarDisplay()
+        $LastSkillUpdate = TimerInit()
+    EndIf
+    ; Live update for Extra tab statistics (coordinates) - more frequent updates
+    If TimerDiff($ExtraStatsUpdateTimer) > 100 Then ; Reduced from 200ms to 100ms
+        UpdateExtraStatisticsDisplay()
+        $ExtraStatsUpdateTimer = TimerInit()
+    EndIf
+    
+    ; Check if we're ready to start a new run and in Fort Aspenwood
+    If $ReadyToStartRun And GetMapID() = $MAP_ID_FORT_ASPENWOOD_LUXON Then
+        Out("Ready to start new vanquish run from Fort Aspenwood!")
+        $ReadyToStartRun = False
+        $VanquishInProgress = True
+        EnsureInFortAspenwoodLuxon()
+        $VanquishInProgress = False
+        $LastVanquishComplete = TimerInit()
+        ; Set flag to start next run after this one completes
+        $ReadyToStartRun = True
+    EndIf
+    
+    ; Removed the 5-second sleep that was blocking updates
+WEnd
+
 Func LuxonFarmSetup()
 	; Inventory management loop during farming
 	While (CountSlots() > 6)
@@ -1211,25 +1349,6 @@ Func MoveOut()
 	VanquishMountQinkai()
 EndFunc
 
-While $BotRunning
-	Sleep(500)
-	
-	; Auto-update skillbar if enabled
-	If GUICtrlRead($GUIAutoUpdateCheckbox) = $GUI_CHECKED And TimerDiff($LastSkillUpdate) > $SkillUpdateInterval Then
-		UpdateSkillbarDisplay()
-		$LastSkillUpdate = TimerInit()
-	EndIf
-	
-	; Live update for Extra tab statistics (coordinates)
-	If TimerDiff($ExtraStatsUpdateTimer) > 200 Then
-		UpdateExtraStatisticsDisplay()
-		$ExtraStatsUpdateTimer = TimerInit()
-	EndIf
-	
-	EnsureInFortAspenwoodLuxon()
-	Sleep(5000)
-WEnd
-
 Func Out($TEXT)
     Local $TIME = "[" & @HOUR & ":" & @MIN & ":" & @SEC & "] - "
     Local $TEXTLEN = StringLen($TEXT)
@@ -1250,20 +1369,33 @@ Func OutExtra($TEXT)
     UpdateExtraStatisticsDisplay()
 EndFunc
 
-Func UpdateExtraStatisticsDisplay2()
-    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & X(-2) & ", " & Y(-2) & ")")
-    GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
-    GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
-    GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
-    GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
-    GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
-    GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
-    GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
-    GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
-    GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
-    GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
-    GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
-    GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+Func UpdateExtraStatisticsDisplay()
+    ; Always update coordinates, even if bot is not initialized
+    Local $currentX = 0
+    Local $currentY = 0
+    
+    If $BotInitialized Then
+        $currentX = Round(X(-2))
+        $currentY = Round(Y(-2))
+    EndIf
+    
+    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & $currentX & ", " & $currentY & ")")
+    
+    ; Only update other stats if bot is initialized
+    If $BotInitialized Then
+        GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
+        GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+        GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+        GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+        GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+        GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+        GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
+        GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+        GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+        GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+        GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+        GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+    EndIf
 EndFunc
 
 Func _Exit()
@@ -1342,6 +1474,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     Local $stepSize = 2500 ; units per step for smooth movement
     Local $lastMoveToX = $aX
     Local $lastMoveToY = $aY
+    Local $currentTargetID = 0 ; Track current target to prevent spamming
     ; Log the action
     If $aDescription <> "" Then
         Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
@@ -1379,6 +1512,8 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
         Local $stepX = $curX + ($dx / $len) * Min($stepSize, $len)
         Local $stepY = $curY + ($dy / $len) * Min($stepSize, $len)
         MoveTo($stepX, $stepY, 50)
+        ; Update coordinates in real-time during movement
+        UpdateExtraStatisticsDisplay()
         ; No unnecessary sleep, keep movement smooth
     WEnd
 
@@ -1413,13 +1548,21 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
                 EndIf
                 $lTarget = GetNearestEnemyPtrToAgent(-2)
                 If $lTarget <> 0 And Not GetIsDead($lTarget) Then
-                    ChangeTarget($lTarget)
-                    Attack($lTarget)
+                    Local $targetID = ID($lTarget)
+                    ; Only change target and attack if this is a new target
+                    If $targetID <> $currentTargetID Then
+                        ChangeTarget($lTarget)
+                        Attack($lTarget, True)
+                        $currentTargetID = $targetID
+                        Out("Switched to new target: " & GetPlayerName($lTarget))
+                    EndIf
                     ; Only use skills if within spell range
                     If GetDistance($lTarget, -2) <= $RANGE_SPELLCAST Then
                         UseSkillsWithPriorityAndCustomOrder($lTarget)
                     EndIf
                 EndIf
+                ; Update coordinates during combat
+                UpdateExtraStatisticsDisplay()
             Until False
             PickUpLoot()
             Out("Checking for dead party members after combat...")
@@ -1541,7 +1684,7 @@ Func VanquishMountQinkai()
 	]
 	
 	; Define ranges for each location (most use default, some use spirit range)
-	Local $ranges[] = [$RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT]
+	Local $ranges[] = [$RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT]
 	
 	; Check if we're starting in Mount Qinkai and need to find the closest starting point
 	Local $startingInMountQinkai = (GetMapID() = 200)
@@ -1625,180 +1768,15 @@ Func VanquishMountQinkai()
 		RndSleep(2000)
 	EndIf
 	
-	; If we came from town (got blessing), start from index 0
-	; Otherwise, find the closest point to start from
+	; Determine starting index for vanquish loop
+	Local $startIndex = 0
+	
 	If $cameFromTown Then
+		; If we came from town (got blessing), start from index 0
 		Out("Came from town with blessing, starting vanquish from index 0")
-		; Move to blessing coordinates and take blessing
-		Move(-8394, -9801)
-		RndSleep(2000)
-		Out('Taking blessing')
-		RndSleep(1000)
-		; Reset vanquish index to 0 for fresh start
+		$startIndex = 0
 		$CurrentVanquishIndex = 0
 		Out("Reset CurrentVanquishIndex to 0 for fresh vanquish start")
-		; Start the loop from the beginning (index 0)
-		For $i = 0 To UBound($vanquishLocations) - 1
-			Local $targetX = $vanquishLocations[$i][0]
-			Local $targetY = $vanquishLocations[$i][1]
-			Local $description = $vanquishLocations[$i][2]
-			Local $range = $ranges[$i]
-			
-			; Debug output to show current progress
-			Out("Processing vanquish location " & $i & "/" & (UBound($vanquishLocations) - 1) & ": " & $description)
-			
-			; Check for death and resurrection
-			Local $currentHealth = GetHealth(-2)
-			Local $distanceFromSpawn = GetDistanceToXY(-8394, -9801, -2)
-			
-			; Detect if player was dead and is now resurrected
-			If $LastHealth <= 0 And $currentHealth > 0 And $distanceFromSpawn < 1000 Then
-				Out("Detected resurrection after death, finding route back to vanquish position " & $CurrentVanquishIndex)
-				$WasDead = True
-				
-				; Get current position after resurrection
-				Local $resurrectX = X(-2)
-				Local $resurrectY = Y(-2)
-				Out("Resurrected at position: (" & $resurrectX & ", " & $resurrectY & ")")
-				
-				; Find the best route from current resurrection point to target vanquish position
-				Local $targetIndex = $CurrentVanquishIndex
-				Local $routeFound = False
-				Local $bestRouteIndex = -1
-				Local $shortestDistance = 999999
-				
-				; First, find the closest vanquish location to our resurrection point
-				For $routeCheck = 0 To $targetIndex
-					Local $routeX = $vanquishLocations[$routeCheck][0]
-					Local $routeY = $vanquishLocations[$routeCheck][1]
-					Local $routeDistance = GetDistanceToXY($routeX, $routeY, -2)
-					
-					If $routeDistance < $shortestDistance And $routeDistance < 8000 Then ; Within reasonable distance
-						$shortestDistance = $routeDistance
-						$bestRouteIndex = $routeCheck
-					EndIf
-				Next
-				
-				; If we found a reachable point, start from there
-				If $bestRouteIndex >= 0 Then
-					Out("Found best route starting point: " & $vanquishLocations[$bestRouteIndex][2] & " at distance " & Round($shortestDistance))
-					
-					; Move to the best starting point
-					Local $startX = $vanquishLocations[$bestRouteIndex][0]
-					Local $startY = $vanquishLocations[$bestRouteIndex][1]
-					Local $startDesc = $vanquishLocations[$bestRouteIndex][2]
-					Local $startRange = $ranges[$bestRouteIndex]
-					
-					Local $startResult = MoveToKill($startX, $startY, $startDesc, $startRange)
-					If $startResult Then
-						Out("Successfully reached starting point: " & $startDesc)
-						$routeFound = True
-						
-						; Now continue from this point to the target
-						For $continueIndex = $bestRouteIndex + 1 To $targetIndex
-							Local $continueX = $vanquishLocations[$continueIndex][0]
-							Local $continueY = $vanquishLocations[$continueIndex][1]
-							Local $continueDesc = $vanquishLocations[$continueIndex][2]
-							Local $continueRange = $ranges[$continueIndex]
-							
-							Out("Continuing route to: " & $continueDesc)
-							Local $continueResult = MoveToKill($continueX, $continueY, $continueDesc, $continueRange)
-							If Not $continueResult Then
-								Out("Failed to reach " & $continueDesc & ", stopping route")
-								ExitLoop
-							EndIf
-						Next
-						
-						; If we successfully reached the target, we're good
-						If $continueIndex > $targetIndex Then
-							Out("Successfully reached target position: " & $vanquishLocations[$targetIndex][2])
-						EndIf
-					Else
-						Out("Failed to reach starting point: " & $startDesc)
-					EndIf
-				EndIf
-				
-				; If no good route found, try alternative approach - find any reachable point
-				If Not $routeFound Then
-					Out("No optimal route found, trying alternative approach")
-					
-					; Look for any vanquish location that's reachable from current position
-					For $altCheck = 0 To UBound($vanquishLocations) - 1
-						Local $altX = $vanquishLocations[$altCheck][0]
-						Local $altY = $vanquishLocations[$altCheck][1]
-						Local $altDesc = $vanquishLocations[$altCheck][2]
-						Local $altRange = $ranges[$altCheck]
-						Local $altDistance = GetDistanceToXY($altX, $altY, -2)
-						
-						If $altDistance < 10000 Then ; Try a larger range
-							Out("Trying alternative route to: " & $altDesc & " at distance " & Round($altDistance))
-							
-							Local $altResult = MoveToKill($altX, $altY, $altDesc, $altRange)
-							If $altResult Then
-								Out("Successfully reached alternative point: " & $altDesc)
-								$routeFound = True
-								
-								; If this point is before our target, continue from here
-								If $altCheck <= $targetIndex Then
-									For $altContinue = $altCheck + 1 To $targetIndex
-										Local $altContinueX = $vanquishLocations[$altContinue][0]
-										Local $altContinueY = $vanquishLocations[$altContinue][1]
-										Local $altContinueDesc = $vanquishLocations[$altContinue][2]
-										Local $altContinueRange = $ranges[$altContinue]
-										
-										Out("Continuing from alternative to: " & $altContinueDesc)
-										Local $altContinueResult = MoveToKill($altContinueX, $altContinueY, $altContinueDesc, $altContinueRange)
-										If Not $altContinueResult Then
-											Out("Failed to reach " & $altContinueDesc & ", stopping")
-											ExitLoop
-										EndIf
-									Next
-								EndIf
-								ExitLoop
-							EndIf
-						EndIf
-					Next
-				EndIf
-				
-				If Not $routeFound Then
-					Out("Could not find any safe route back, continuing from current position")
-				EndIf
-				
-				; Continue from the current vanquish position, not the closest point
-				; The current position is already tracked in $CurrentVanquishIndex
-				Out("Continuing vanquish from: " & $vanquishLocations[$CurrentVanquishIndex][2] & " at (" & $vanquishLocations[$CurrentVanquishIndex][0] & ", " & $vanquishLocations[$CurrentVanquishIndex][1] & ")")
-				
-				; No need to change the loop index, continue from current position
-			EndIf
-			
-			; Update health tracking
-			$LastHealth = $currentHealth
-			
-			; Attempt to move to and clear the target location
-			Local $result = MoveToKill($targetX, $targetY, $description, $range)
-			
-			; If MoveToKill failed (likely due to death), wait for resurrection and continue
-			If Not $result Then
-				Out("MoveToKill failed for " & $description & ", waiting for resurrection...")
-				RndSleep(3000) ; Wait for resurrection
-				
-				; Don't break the loop, continue with next target
-			EndIf
-			
-			; Update current vanquish position
-			$CurrentVanquishIndex = $i
-			
-			; Small delay between locations
-			RndSleep(1000)
-		Next
-		; After finishing all locations, return to town and exit
-		Out("Vanquish complete! Traveling back to Fort Aspenwood to restart...")
-		RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
-		WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
-		RndSleep(2000)
-		$LastVanquishComplete = TimerInit()
-		Out("Successfully returned to Fort Aspenwood. Restarting vanquish process...")
-		Return 0
 	Else
 		; If we didn't come from town, find the closest point to start from
 		Out("Already in Mount Qinkai away from spawn, finding closest starting point...")
@@ -1818,350 +1796,180 @@ Func VanquishMountQinkai()
 		Out("Closest vanquish point: " & $vanquishLocations[$nearestIndex][2] & " at (" & $vanquishLocations[$nearestIndex][0] & ", " & $vanquishLocations[$nearestIndex][1] & ") - Distance: " & Round($nearestDistance))
 		Out("Starting vanquish loop from index " & $nearestIndex)
 		
-		; Reset vanquish index to the nearest index for this scenario
+		$startIndex = $nearestIndex
 		$CurrentVanquishIndex = $nearestIndex
 		Out("Set CurrentVanquishIndex to " & $nearestIndex & " (closest point)")
-		
-		; Start the loop from the closest point
-		For $i = $nearestIndex To UBound($vanquishLocations) - 1
-			Local $targetX = $vanquishLocations[$i][0]
-			Local $targetY = $vanquishLocations[$i][1]
-			Local $description = $vanquishLocations[$i][2]
-			Local $range = $ranges[$i]
-			
-			; Debug output to show current progress
-			Out("Processing vanquish location " & $i & "/" & (UBound($vanquishLocations) - 1) & ": " & $description)
-			
-			; Check for death and resurrection
-			Local $currentHealth = GetHealth(-2)
-			Local $distanceFromSpawn = GetDistanceToXY(-8394, -9801, -2)
-			
-			; Detect if player was dead and is now resurrected
-			If $LastHealth <= 0 And $currentHealth > 0 And $distanceFromSpawn < 1000 Then
-				Out("Detected resurrection after death, finding route back to vanquish position " & $CurrentVanquishIndex)
-				$WasDead = True
-				
-				; Get current position after resurrection
-				Local $resurrectX = X(-2)
-				Local $resurrectY = Y(-2)
-				Out("Resurrected at position: (" & $resurrectX & ", " & $resurrectY & ")")
-				
-				; Find the best route from current resurrection point to target vanquish position
-				Local $targetIndex = $CurrentVanquishIndex
-				Local $routeFound = False
-				Local $bestRouteIndex = -1
-				Local $shortestDistance = 999999
-				
-				; First, find the closest vanquish location to our resurrection point
-				For $routeCheck = 0 To $targetIndex
-					Local $routeX = $vanquishLocations[$routeCheck][0]
-					Local $routeY = $vanquishLocations[$routeCheck][1]
-					Local $routeDistance = GetDistanceToXY($routeX, $routeY, -2)
-					
-					If $routeDistance < $shortestDistance And $routeDistance < 8000 Then ; Within reasonable distance
-						$shortestDistance = $routeDistance
-						$bestRouteIndex = $routeCheck
-					EndIf
-				Next
-				
-				; If we found a reachable point, start from there
-				If $bestRouteIndex >= 0 Then
-					Out("Found best route starting point: " & $vanquishLocations[$bestRouteIndex][2] & " at distance " & Round($shortestDistance))
-					
-					; Move to the best starting point
-					Local $startX = $vanquishLocations[$bestRouteIndex][0]
-					Local $startY = $vanquishLocations[$bestRouteIndex][1]
-					Local $startDesc = $vanquishLocations[$bestRouteIndex][2]
-					Local $startRange = $ranges[$bestRouteIndex]
-					
-					Local $startResult = MoveToKill($startX, $startY, $startDesc, $startRange)
-					If $startResult Then
-						Out("Successfully reached starting point: " & $startDesc)
-						$routeFound = True
-						
-						; Now continue from this point to the target
-						For $continueIndex = $bestRouteIndex + 1 To $targetIndex
-							Local $continueX = $vanquishLocations[$continueIndex][0]
-							Local $continueY = $vanquishLocations[$continueIndex][1]
-							Local $continueDesc = $vanquishLocations[$continueIndex][2]
-							Local $continueRange = $ranges[$continueIndex]
-							
-							Out("Continuing route to: " & $continueDesc)
-							Local $continueResult = MoveToKill($continueX, $continueY, $continueDesc, $continueRange)
-							If Not $continueResult Then
-								Out("Failed to reach " & $continueDesc & ", stopping route")
-								ExitLoop
-							EndIf
-						Next
-						
-						; If we successfully reached the target, we're good
-						If $continueIndex > $targetIndex Then
-							Out("Successfully reached target position: " & $vanquishLocations[$targetIndex][2])
-						EndIf
-					Else
-						Out("Failed to reach starting point: " & $startDesc)
-					EndIf
-				EndIf
-				
-				; If no good route found, try alternative approach - find any reachable point
-				If Not $routeFound Then
-					Out("No optimal route found, trying alternative approach")
-					
-					; Look for any vanquish location that's reachable from current position
-					For $altCheck = 0 To UBound($vanquishLocations) - 1
-						Local $altX = $vanquishLocations[$altCheck][0]
-						Local $altY = $vanquishLocations[$altCheck][1]
-						Local $altDesc = $vanquishLocations[$altCheck][2]
-						Local $altRange = $ranges[$altCheck]
-						Local $altDistance = GetDistanceToXY($altX, $altY, -2)
-						
-						If $altDistance < 10000 Then ; Try a larger range
-							Out("Trying alternative route to: " & $altDesc & " at distance " & Round($altDistance))
-							
-							Local $altResult = MoveToKill($altX, $altY, $altDesc, $altRange)
-							If $altResult Then
-								Out("Successfully reached alternative point: " & $altDesc)
-								$routeFound = True
-								
-								; If this point is before our target, continue from here
-								If $altCheck <= $targetIndex Then
-									For $altContinue = $altCheck + 1 To $targetIndex
-										Local $altContinueX = $vanquishLocations[$altContinue][0]
-										Local $altContinueY = $vanquishLocations[$altContinue][1]
-										Local $altContinueDesc = $vanquishLocations[$altContinue][2]
-										Local $altContinueRange = $ranges[$altContinue]
-										
-										Out("Continuing from alternative to: " & $altContinueDesc)
-										Local $altContinueResult = MoveToKill($altContinueX, $altContinueY, $altContinueDesc, $altContinueRange)
-										If Not $altContinueResult Then
-											Out("Failed to reach " & $altContinueDesc & ", stopping")
-											ExitLoop
-										EndIf
-									Next
-								EndIf
-								ExitLoop
-							EndIf
-						EndIf
-					Next
-				EndIf
-				
-				If Not $routeFound Then
-					Out("Could not find any safe route back, continuing from current position")
-				EndIf
-				
-				; Continue from the current vanquish position, not the closest point
-				; The current position is already tracked in $CurrentVanquishIndex
-				Out("Continuing vanquish from: " & $vanquishLocations[$CurrentVanquishIndex][2] & " at (" & $vanquishLocations[$CurrentVanquishIndex][0] & ", " & $vanquishLocations[$CurrentVanquishIndex][1] & ")")
-				
-				; No need to change the loop index, continue from current position
-			EndIf
-			
-			; Update health tracking
-			$LastHealth = $currentHealth
-			
-			; Attempt to move to and clear the target location
-			Local $result = MoveToKill($targetX, $targetY, $description, $range)
-			
-			; If MoveToKill failed (likely due to death), wait for resurrection and continue
-			If Not $result Then
-				Out("MoveToKill failed for " & $description & ", waiting for resurrection...")
-				RndSleep(3000) ; Wait for resurrection
-				
-				; Don't break the loop, continue with next target
-			EndIf
-			
-			; Update current vanquish position
-			$CurrentVanquishIndex = $i
-			
-			; Small delay between locations
-			RndSleep(1000)
-		Next
 	EndIf
 	
-	Move(-8394, -9801) ; Move to blessing coordinates
-	RndSleep(2000)
-		; Normal vanquish flow (starting from town)
-		Out('Taking blessing')
-		RndSleep(1000)
+	; SINGLE vanquish loop - process all locations from start index to end
+	For $i = $startIndex To UBound($vanquishLocations) - 1
+		Local $targetX = $vanquishLocations[$i][0]
+		Local $targetY = $vanquishLocations[$i][1]
+		Local $description = $vanquishLocations[$i][2]
+		Local $range = $ranges[$i]
 		
-		; Reset vanquish index to 0 for normal vanquish flow from town
-		$CurrentVanquishIndex = 0
-		Out("Reset CurrentVanquishIndex to 0 for normal vanquish flow from town")
-
-		; Process each location
-		For $i = 0 To UBound($vanquishLocations) - 1
-			Local $targetX = $vanquishLocations[$i][0]
-			Local $targetY = $vanquishLocations[$i][1]
-			Local $description = $vanquishLocations[$i][2]
-			Local $range = $ranges[$i]
+		; Debug output to show current progress
+		Out("Processing vanquish location " & $i & "/" & (UBound($vanquishLocations) - 1) & ": " & $description)
+		
+		; Check for death and resurrection
+		Local $currentHealth = GetHealth(-2)
+		Local $distanceFromSpawn = GetDistanceToXY(-8394, -9801, -2)
+		
+		; Detect if player was dead and is now resurrected
+		If $LastHealth <= 0 And $currentHealth > 0 And $distanceFromSpawn < 1000 Then
+			Out("Detected resurrection after death, finding route back to vanquish position " & $CurrentVanquishIndex)
+			$WasDead = True
 			
-			; Debug output to show current progress
-			Out("Processing vanquish location " & $i & "/" & (UBound($vanquishLocations) - 1) & ": " & $description)
+			; Get current position after resurrection
+			Local $resurrectX = X(-2)
+			Local $resurrectY = Y(-2)
+			Out("Resurrected at position: (" & $resurrectX & ", " & $resurrectY & ")")
 			
-			; Check for death and resurrection
-			Local $currentHealth = GetHealth(-2)
-			Local $distanceFromSpawn = GetDistanceToXY(-8394, -9801, -2)
+			; Find the best route from current resurrection point to target vanquish position
+			Local $targetIndex = $CurrentVanquishIndex
+			Local $routeFound = False
+			Local $bestRouteIndex = -1
+			Local $shortestDistance = 999999
 			
-			; Detect if player was dead and is now resurrected
-			If $LastHealth <= 0 And $currentHealth > 0 And $distanceFromSpawn < 1000 Then
-				Out("Detected resurrection after death, finding route back to vanquish position " & $CurrentVanquishIndex)
-				$WasDead = True
+			; First, find the closest vanquish location to our resurrection point
+			For $routeCheck = 0 To $targetIndex
+				Local $routeX = $vanquishLocations[$routeCheck][0]
+				Local $routeY = $vanquishLocations[$routeCheck][1]
+				Local $routeDistance = GetDistanceToXY($routeX, $routeY, -2)
 				
-				; Get current position after resurrection
-				Local $resurrectX = X(-2)
-				Local $resurrectY = Y(-2)
-				Out("Resurrected at position: (" & $resurrectX & ", " & $resurrectY & ")")
-				
-				; Find the best route from current resurrection point to target vanquish position
-				Local $targetIndex = $CurrentVanquishIndex
-				Local $routeFound = False
-				Local $bestRouteIndex = -1
-				Local $shortestDistance = 999999
-				
-				; First, find the closest vanquish location to our resurrection point
-				For $routeCheck = 0 To $targetIndex
-					Local $routeX = $vanquishLocations[$routeCheck][0]
-					Local $routeY = $vanquishLocations[$routeCheck][1]
-					Local $routeDistance = GetDistanceToXY($routeX, $routeY, -2)
-					
-					If $routeDistance < $shortestDistance And $routeDistance < 8000 Then ; Within reasonable distance
-						$shortestDistance = $routeDistance
-						$bestRouteIndex = $routeCheck
-					EndIf
-				Next
-				
-				; If we found a reachable point, start from there
-				If $bestRouteIndex >= 0 Then
-					Out("Found best route starting point: " & $vanquishLocations[$bestRouteIndex][2] & " at distance " & Round($shortestDistance))
-					
-					; Move to the best starting point
-					Local $startX = $vanquishLocations[$bestRouteIndex][0]
-					Local $startY = $vanquishLocations[$bestRouteIndex][1]
-					Local $startDesc = $vanquishLocations[$bestRouteIndex][2]
-					Local $startRange = $ranges[$bestRouteIndex]
-					
-					Local $startResult = MoveToKill($startX, $startY, $startDesc, $startRange)
-					If $startResult Then
-						Out("Successfully reached starting point: " & $startDesc)
-						$routeFound = True
-						
-						; Now continue from this point to the target
-						For $continueIndex = $bestRouteIndex + 1 To $targetIndex
-							Local $continueX = $vanquishLocations[$continueIndex][0]
-							Local $continueY = $vanquishLocations[$continueIndex][1]
-							Local $continueDesc = $vanquishLocations[$continueIndex][2]
-							Local $continueRange = $ranges[$continueIndex]
-							
-							Out("Continuing route to: " & $continueDesc)
-							Local $continueResult = MoveToKill($continueX, $continueY, $continueDesc, $continueRange)
-							If Not $continueResult Then
-								Out("Failed to reach " & $continueDesc & ", stopping route")
-								ExitLoop
-							EndIf
-						Next
-						
-						; If we successfully reached the target, we're good
-						If $continueIndex > $targetIndex Then
-							Out("Successfully reached target position: " & $vanquishLocations[$targetIndex][2])
-						EndIf
-					Else
-						Out("Failed to reach starting point: " & $startDesc)
-					EndIf
+				If $routeDistance < $shortestDistance And $routeDistance < 8000 Then ; Within reasonable distance
+					$shortestDistance = $routeDistance
+					$bestRouteIndex = $routeCheck
 				EndIf
+			Next
+			
+			; If we found a reachable point, start from there
+			If $bestRouteIndex >= 0 Then
+				Out("Found best route starting point: " & $vanquishLocations[$bestRouteIndex][2] & " at distance " & Round($shortestDistance))
 				
-				; If no good route found, try alternative approach - find any reachable point
-				If Not $routeFound Then
-					Out("No optimal route found, trying alternative approach")
+				; Move to the best starting point
+				Local $startX = $vanquishLocations[$bestRouteIndex][0]
+				Local $startY = $vanquishLocations[$bestRouteIndex][1]
+				Local $startDesc = $vanquishLocations[$bestRouteIndex][2]
+				Local $startRange = $ranges[$bestRouteIndex]
+				
+				Local $startResult = MoveToKill($startX, $startY, $startDesc, $startRange)
+				If $startResult Then
+					Out("Successfully reached starting point: " & $startDesc)
+					$routeFound = True
 					
-					; Look for any vanquish location that's reachable from current position
-					For $altCheck = 0 To UBound($vanquishLocations) - 1
-						Local $altX = $vanquishLocations[$altCheck][0]
-						Local $altY = $vanquishLocations[$altCheck][1]
-						Local $altDesc = $vanquishLocations[$altCheck][2]
-						Local $altRange = $ranges[$altCheck]
-						Local $altDistance = GetDistanceToXY($altX, $altY, -2)
+					; Now continue from this point to the target
+					For $continueIndex = $bestRouteIndex + 1 To $targetIndex
+						Local $continueX = $vanquishLocations[$continueIndex][0]
+						Local $continueY = $vanquishLocations[$continueIndex][1]
+						Local $continueDesc = $vanquishLocations[$continueIndex][2]
+						Local $continueRange = $ranges[$continueIndex]
 						
-						If $altDistance < 10000 Then ; Try a larger range
-							Out("Trying alternative route to: " & $altDesc & " at distance " & Round($altDistance))
-							
-							Local $altResult = MoveToKill($altX, $altY, $altDesc, $altRange)
-							If $altResult Then
-								Out("Successfully reached alternative point: " & $altDesc)
-								$routeFound = True
-								
-								; If this point is before our target, continue from here
-								If $altCheck <= $targetIndex Then
-									For $altContinue = $altCheck + 1 To $targetIndex
-										Local $altContinueX = $vanquishLocations[$altContinue][0]
-										Local $altContinueY = $vanquishLocations[$altContinue][1]
-										Local $altContinueDesc = $vanquishLocations[$altContinue][2]
-										Local $altContinueRange = $ranges[$altContinue]
-										
-										Out("Continuing from alternative to: " & $altContinueDesc)
-										Local $altContinueResult = MoveToKill($altContinueX, $altContinueY, $altContinueDesc, $altContinueRange)
-										If Not $altContinueResult Then
-											Out("Failed to reach " & $altContinueDesc & ", stopping")
-											ExitLoop
-										EndIf
-									Next
-								EndIf
-								ExitLoop
-							EndIf
+						Out("Continuing route to: " & $continueDesc)
+						Local $continueResult = MoveToKill($continueX, $continueY, $continueDesc, $continueRange)
+						If Not $continueResult Then
+							Out("Failed to reach " & $continueDesc & ", stopping route")
+							ExitLoop
 						EndIf
 					Next
+					
+					; If we successfully reached the target, we're good
+					If $continueIndex > $targetIndex Then
+						Out("Successfully reached target position: " & $vanquishLocations[$targetIndex][2])
+					EndIf
+				Else
+					Out("Failed to reach starting point: " & $startDesc)
 				EndIf
-				
-				If Not $routeFound Then
-					Out("Could not find any safe route back, continuing from current position")
-				EndIf
-				
-				; Continue from the current vanquish position, not the closest point
-				; The current position is already tracked in $CurrentVanquishIndex
-				Out("Continuing vanquish from: " & $vanquishLocations[$CurrentVanquishIndex][2] & " at (" & $vanquishLocations[$CurrentVanquishIndex][0] & ", " & $vanquishLocations[$CurrentVanquishIndex][1] & ")")
-				
-				; No need to change the loop index, continue from current position
 			EndIf
 			
-			; Update health tracking
-			$LastHealth = $currentHealth
-			
-			; Attempt to move to and clear the target location
-			Local $result = MoveToKill($targetX, $targetY, $description, $range)
-			
-			; If MoveToKill failed (likely due to death), wait for resurrection and continue
-			If Not $result Then
-				Out("MoveToKill failed for " & $description & ", waiting for resurrection...")
-				RndSleep(3000) ; Wait for resurrection
+			; If no good route found, try alternative approach - find any reachable point
+			If Not $routeFound Then
+				Out("No optimal route found, trying alternative approach")
 				
-				; Don't break the loop, continue with next target
+				; Look for any vanquish location that's reachable from current position
+				For $altCheck = 0 To UBound($vanquishLocations) - 1
+					Local $altX = $vanquishLocations[$altCheck][0]
+					Local $altY = $vanquishLocations[$altCheck][1]
+					Local $altDesc = $vanquishLocations[$altCheck][2]
+					Local $altRange = $ranges[$altCheck]
+					Local $altDistance = GetDistanceToXY($altX, $altY, -2)
+					
+					If $altDistance < 10000 Then ; Try a larger range
+						Out("Trying alternative route to: " & $altDesc & " at distance " & Round($altDistance))
+						
+						Local $altResult = MoveToKill($altX, $altY, $altDesc, $altRange)
+						If $altResult Then
+							Out("Successfully reached alternative point: " & $altDesc)
+							$routeFound = True
+							
+							; If this point is before our target, continue from here
+							If $altCheck <= $targetIndex Then
+								For $altContinue = $altCheck + 1 To $targetIndex
+									Local $altContinueX = $vanquishLocations[$altContinue][0]
+									Local $altContinueY = $vanquishLocations[$altContinue][1]
+									Local $altContinueDesc = $vanquishLocations[$altContinue][2]
+									Local $altContinueRange = $ranges[$altContinue]
+									
+									Out("Continuing from alternative to: " & $altContinueDesc)
+									Local $altContinueResult = MoveToKill($altContinueX, $altContinueY, $altContinueDesc, $altContinueRange)
+									If Not $altContinueResult Then
+										Out("Failed to reach " & $altContinueDesc & ", stopping")
+										ExitLoop
+									EndIf
+								Next
+							EndIf
+							ExitLoop
+						EndIf
+					EndIf
+				Next
 			EndIf
 			
-			; Update current vanquish position
-			$CurrentVanquishIndex = $i
+			If Not $routeFound Then
+				Out("Could not find any safe route back, continuing from current position")
+			EndIf
 			
-			; Small delay between locations
-			RndSleep(1000)
-		Next
+			; Continue from the current vanquish position, not the closest point
+			; The current position is already tracked in $CurrentVanquishIndex
+			Out("Continuing vanquish from: " & $vanquishLocations[$CurrentVanquishIndex][2] & " at (" & $vanquishLocations[$CurrentVanquishIndex][0] & ", " & $vanquishLocations[$CurrentVanquishIndex][1] & ")")
+			
+			; No need to change the loop index, continue from current position
+		EndIf
+		
+		; Update health tracking
+		$LastHealth = $currentHealth
+		
+		; Attempt to move to and clear the target location
+		Local $result = MoveToKill($targetX, $targetY, $description, $range)
+		
+		; If MoveToKill failed (likely due to death), wait for resurrection and continue
+		If Not $result Then
+			Out("MoveToKill failed for " & $description & ", waiting for resurrection...")
+			RndSleep(3000) ; Wait for resurrection
+			
+			; Don't break the loop, continue with next target
+		EndIf
+		
+		; Update current vanquish position
+		$CurrentVanquishIndex = $i
+		
+		; Small delay between locations
+		RndSleep(1000)
+	Next
 	
 	; Check if area is vanquished at the end
 	If Not GetAreaVanquished() Then
-			Out("Vanquish complete! Traveling back to Fort Aspenwood to restart...")
-	RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
-	WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
-	RndSleep(2000)
-		Return 1
-
+		Out("Area not fully vanquished, but vanquish loop completed")
+        EnsureInFortAspenwoodLuxon()
 	EndIf
 	
 	Out('Area vanquished successfully!')
 	
-	; Always travel back to Fort Aspenwood after vanquish attempt
+	; ALWAYS travel back to Fort Aspenwood after vanquish attempt - ONLY ONCE at the very end
 	Out("Vanquish complete! Traveling back to Fort Aspenwood to restart...")
-	RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
-	WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
+    EnsureInFortAspenwoodLuxon()
 	RndSleep(2000)
 	$LastVanquishComplete = TimerInit()
-	Out("Successfully returned to Fort Aspenwood. Restarting vanquish process...")
+	Out("Successfully returned to Fort Aspenwood. Vanquish run complete. Waiting for next run...")
 	Return 0
 EndFunc
 
@@ -2251,8 +2059,7 @@ EndFunc
 Func UseCustomFightingOrder($lTarget)
     ; Check if we have any skills in custom order
     If $CustomFightingCount <= 0 Then
-        ; Still attack even if no skills available
-        Attack($lTarget)
+        ; No skills available, just return (main loop handles attacking)
         Return
     EndIf
     ; Use skills in the custom fighting order
@@ -2263,7 +2070,7 @@ Func UseCustomFightingOrder($lTarget)
     Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($skillSlot))
     If $skillEnabled And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
         ; Use the skill
-        UseSkillEx($skillSlot, $lTarget, 3000, True)
+        UseSkillEx($skillSlot, $lTarget, 3000, false)
         HighlightSkillLabel($skillSlot)
         RndSleep(200)
         $CurrentCustomSkillIndex += 1
@@ -2276,8 +2083,7 @@ Func UseCustomFightingOrder($lTarget)
             $CurrentCustomSkillIndex = 0 ; Reset to beginning
         EndIf
     EndIf
-    ; Always attack the target (auto-attack) even if skills aren't available
-    Attack($lTarget)
+    ; Main combat loop handles attacking, no need to call Attack here
 EndFunc
 
 Func UsePrioritySkills($lTarget)
@@ -2292,7 +2098,6 @@ Func UsePrioritySkills($lTarget)
             UseSkillEx($i, $lTarget, 3000, True)
             HighlightSkillLabel($i)
             RndSleep(200)
-            Attack($lTarget)
             Return ; Exit after using one priority skill
         EndIf
     Next
@@ -2307,12 +2112,10 @@ Func UsePrioritySkills($lTarget)
             UseSkillEx($i, $lTarget, 3000, True)
             HighlightSkillLabel($i)
             RndSleep(200)
-            Attack($lTarget)
             Return ; Exit after using one skill
         EndIf
     Next
-    ; If no skills are available, still attack the target
-    Attack($lTarget)
+    ; If no skills are available, main combat loop handles attacking
 EndFunc
 
 ; Function to check for dead party members and wait for them to be resurrected
@@ -2424,22 +2227,6 @@ Func UpdateStatisticsDisplay()
     GUICtrlSetData($StatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
     GUICtrlSetData($StatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
     UpdateExtraStatisticsDisplay()
-EndFunc
-
-Func UpdateExtraStatisticsDisplay()
-    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & X(-2) & ", " & Y(-2) & ")")
-    GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
-    GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
-    GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
-    GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
-    GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
-    GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
-    GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
-    GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
-    GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
-    GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
-    GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
-    GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
 EndFunc
 
 ; Helper to highlight a skill label when used

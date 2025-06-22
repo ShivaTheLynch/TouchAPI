@@ -145,184 +145,110 @@ Func GetItemAgentExists($aItemAgentID)
 EndFunc   ;==>GetItemAgentExists
 
 Func CanPickUp($aItemPtr)
-	Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
-	Local $aExtraID = GetItemInfoByPtr($aItemPtr, "Dye1")
-	Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
-	Local $lItemType = GetItemInfoByPtr($aItemPtr, "ItemType")
-	Local $Requirement = GetItemReq($aItemPtr)
-	
-	; Check if GUI controls exist (for backward compatibility)
-	Local $GUIExists = True
-	If Not IsDeclared("GUIPickupGoldCheckbox") Then $GUIExists = False
-	
-	; Gold coins (only pick if character has less than 99k in inventory)
-	If ($lModelID == 2511) And (GetGoldCharacter() < 99000) Then
-		Return True
-	EndIf
-	
-	; Dyes - check GUI setting if available
-	If ($lModelID == $ITEM_ID_Dyes) Then
-		If $GUIExists And GUICtrlRead($GUIPickupDyesCheckbox) = $GUI_CHECKED Then
-			; Check for specific dye colors (black and white)
-			If (($aExtraID == $ITEM_ExtraID_BlackDye) Or ($aExtraID == $ITEM_ExtraID_WhiteDye)) Then
-				Return True
-			EndIf
-		ElseIf Not $GUIExists Then
-			; Fallback to original logic
-			If (($aExtraID == $ITEM_ExtraID_BlackDye) Or ($aExtraID == $ITEM_ExtraID_WhiteDye)) Then
-				Return True
-			EndIf
-		EndIf
-		Return False
-	EndIf
-	
-	; Rarity-based filtering
-	If $GUIExists Then
-		Switch $lRarity
-			Case $rarity_gold ; Gold items
-				If GUICtrlRead($GUIPickupGoldCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $rarity_purple ; Purple items
-				If GUICtrlRead($GUIPickupPurpleCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $rarity_blue ; Blue items
-				If GUICtrlRead($GUIPickupBlueCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $rarity_green ; Green items
-				If GUICtrlRead($GUIPickupGreenCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $rarity_white ; White items
-				If GUICtrlRead($GUIPickupWhiteCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $rarity_gray ; Gray items
-				If GUICtrlRead($GUIPickupGrayCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-		EndSwitch
-	Else
-		; Fallback to original logic
-		If ($lRarity == $rarity_gold) Then
-			Return True
-		ElseIf ($lRarity == $rarity_purple) Then
-			Return False
-		EndIf
-	EndIf
-	
-	; Special items that should always be picked up regardless of GUI settings
-	If ($lModelID == $ITEM_ID_Lockpicks) Then
-		Return True ; Lockpicks
-	ElseIf $lModelID == 22269 Then
-		Return True ; Cupcakes
-	ElseIf CheckArrayPscon($lModelID) Then
-		Return True ; Pcons
-	ElseIf IsRareMaterial($aItemPtr) Then
-		Return True ; Rare Materials
-	ElseIf $lModelID == 522 Then
-		Return True ; Dark Remains
-	ElseIf $lModelID == 19187 Then
-		Return True ; Ruby Djinn Essence
-	ElseIf $lModelID == 19186 Then
-		Return True ; Diamond Djinn Essence
-	ElseIf $lModelID == 19188 Then
-		Return True ; Sapphire Djinn Essence
-	ElseIf $lModelID == 19189 Then
-		Return True ; Water Djinn Essence
-	EndIf
-	
-	; Item type-based filtering (if GUI exists)
-	If $GUIExists Then
-		; Materials
-		If IsMaterial($aItemPtr) Then
-			If GUICtrlRead($GUIPickupMaterialsCheckbox) = $GUI_CHECKED Then
-				Return True
-			EndIf
-		EndIf
-		
-		; Keys
-		If IsKey($aItemPtr) Then
-			If GUICtrlRead($GUIPickupKeysCheckbox) = $GUI_CHECKED Then
-				Return True
-			EndIf
-		EndIf
-		
-		; Scrolls
-		If IsScroll($aItemPtr) Then
-			If GUICtrlRead($GUIPickupScrollsCheckbox) = $GUI_CHECKED Then
-				Return True
-			EndIf
-		EndIf
-		
-		; Consumables
-		If IsConsumable($aItemPtr) Then
-			If GUICtrlRead($GUIPickupConsumablesCheckbox) = $GUI_CHECKED Then
-				Return True
-			EndIf
-		EndIf
-		
-		; Weapon type filtering
-		Switch $lItemType
-			Case $item_type_axe ; Axe
-				If GUICtrlRead($GUIPickupAxesCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_bow ; Bow
-				If GUICtrlRead($GUIPickupBowsCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_sword ; Sword
-				If GUICtrlRead($GUIPickupSwordsCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_hammer ; Hammer
-				If GUICtrlRead($GUIPickupHammersCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_daggers ; Dagger
-				If GUICtrlRead($GUIPickupDaggersCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_scythe ; Scythe
-				If GUICtrlRead($GUIPickupScythesCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_staff ; Staff
-				If GUICtrlRead($GUIPickupStavesCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_wand ; Wand
-				If GUICtrlRead($GUIPickupWandsCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_shield ; Shield
-				If GUICtrlRead($GUIPickupShieldsCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_offhand ; Focus Item
-				If GUICtrlRead($GUIPickupFocusItemsCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_chestpiece, $item_type_boots, $item_type_gloves, $item_type_headpiece, $item_type_leggins ; Armor
-				If GUICtrlRead($GUIPickupArmorCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_rune_and_mod ; Rune
-				If GUICtrlRead($GUIPickupRunesCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-			Case $item_type_key ; Insignia (and other key items)
-				If GUICtrlRead($GUIPickupInsigniasCheckbox) = $GUI_CHECKED Then
-					Return True
-				EndIf
-		EndSwitch
-	EndIf
-	
-	; If we get here, the item doesn't match any criteria
-	Return False
+    Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
+    Local $aExtraID = GetItemInfoByPtr($aItemPtr, "Dye1")
+    Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
+    ; Only use rarity and special item logic
+    Local $GUIExists = True
+    If Not IsDeclared("GUIPickupGoldCheckbox") Then $GUIExists = False
+
+    ; Gold coins (only pick if character has less than 99k in inventory)
+    If ($lModelID == 2511) And (GetGoldCharacter() < 99000) Then
+        Return True
+    EndIf
+
+    ; Dyes - check GUI setting if available
+    If ($lModelID == $ITEM_ID_Dyes) Then
+        If $GUIExists And GUICtrlRead($GUIPickupDyesCheckbox) = $GUI_CHECKED Then
+            If (($aExtraID == $ITEM_ExtraID_BlackDye) Or ($aExtraID == $ITEM_ExtraID_WhiteDye)) Then
+                Return True
+            EndIf
+        ElseIf Not $GUIExists Then
+            If (($aExtraID == $ITEM_ExtraID_BlackDye) Or ($aExtraID == $ITEM_ExtraID_WhiteDye)) Then
+                Return True
+            EndIf
+        EndIf
+        Return False
+    EndIf
+
+    ; Rarity-based filtering
+    If $GUIExists Then
+        Switch $lRarity
+            Case $rarity_gold ; Gold items
+                If GUICtrlRead($GUIPickupGoldCheckbox) = $GUI_CHECKED Then
+                    Return True
+                EndIf
+            Case $rarity_purple ; Purple items
+                If GUICtrlRead($GUIPickupPurpleCheckbox) = $GUI_CHECKED Then
+                    Return True
+                EndIf
+            Case $rarity_blue ; Blue items
+                If GUICtrlRead($GUIPickupBlueCheckbox) = $GUI_CHECKED Then
+                    Return True
+                EndIf
+            Case $rarity_green ; Green items
+                If GUICtrlRead($GUIPickupGreenCheckbox) = $GUI_CHECKED Then
+                    Return True
+                EndIf
+            Case $rarity_white ; White items
+                If GUICtrlRead($GUIPickupWhiteCheckbox) = $GUI_CHECKED Then
+                    Return True
+                EndIf
+        EndSwitch
+    Else
+        If ($lRarity == $rarity_gold) Then
+            Return True
+        ElseIf ($lRarity == $rarity_purple) Then
+            Return False
+        EndIf
+    EndIf
+
+    ; Special items that should always be picked up regardless of GUI settings
+    If ($lModelID == $ITEM_ID_Lockpicks) Then
+        Return True ; Lockpicks
+    ElseIf $lModelID == 22269 Then
+        Return True ; Cupcakes
+    ElseIf CheckArrayPscon($lModelID) Then
+        Return True ; Pcons
+    ElseIf IsRareMaterial($aItemPtr) Then
+        Return True ; Rare Materials
+    ElseIf $lModelID == 522 Then
+        Return True ; Dark Remains
+    ElseIf $lModelID == 19187 Then
+        Return True ; Ruby Djinn Essence
+    ElseIf $lModelID == 19186 Then
+        Return True ; Diamond Djinn Essence
+    ElseIf $lModelID == 19188 Then
+        Return True ; Sapphire Djinn Essence
+    ElseIf $lModelID == 19189 Then
+        Return True ; Water Djinn Essence
+    EndIf
+
+    ; Materials
+    If $GUIExists And IsMaterial($aItemPtr) Then
+        If GUICtrlRead($GUIPickupMaterialsCheckbox) = $GUI_CHECKED Then
+            Return True
+        EndIf
+    EndIf
+    ; Keys
+    If $GUIExists And IsKey($aItemPtr) Then
+        If GUICtrlRead($GUIPickupKeysCheckbox) = $GUI_CHECKED Then
+            Return True
+        EndIf
+    EndIf
+    ; Scrolls
+    If $GUIExists And IsScroll($aItemPtr) Then
+        If GUICtrlRead($GUIPickupScrollsCheckbox) = $GUI_CHECKED Then
+            Return True
+        EndIf
+    EndIf
+    ; Consumables
+    If $GUIExists And IsConsumable($aItemPtr) Then
+        If GUICtrlRead($GUIPickupConsumablesCheckbox) = $GUI_CHECKED Then
+            Return True
+        EndIf
+    EndIf
+    Return False
 EndFunc   ;==>CanPickUp
 
 ; Helper functions for item type detection
@@ -684,90 +610,24 @@ EndFunc ;==>Ident
 ; Function to check if an item should be salvaged based on Salvage tab GUI
 Func CanSalvageByGui($aItemPtr)
     Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
-    Local $lItemType = GetItemInfoByPtr($aItemPtr, "ItemType")
-    ; Rarity checkboxes
+    ; Only use rarity checkboxes
     If $lRarity = $rarity_gold And GUICtrlRead($GUISalvageGoldCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_purple And GUICtrlRead($GUISalvagePurpleCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_blue And GUICtrlRead($GUISalvageBlueCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_green And GUICtrlRead($GUISalvageGreenCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_white And GUICtrlRead($GUISalvageWhiteCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_gray And GUICtrlRead($GUISalvageGrayCheckbox) = $GUI_CHECKED Then Return True
-    ; Weapon type checkboxes (excluding runes/insignias)
-    Switch $lItemType
-        Case $item_type_axe
-            If GUICtrlRead($GUISalvageAxesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_bow
-            If GUICtrlRead($GUISalvageBowsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_sword
-            If GUICtrlRead($GUISalvageSwordsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_hammer
-            If GUICtrlRead($GUISalvageHammersCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_daggers
-            If GUICtrlRead($GUISalvageDaggersCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_scythe
-            If GUICtrlRead($GUISalvageScythesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_staff
-            If GUICtrlRead($GUISalvageStavesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_wand
-            If GUICtrlRead($GUISalvageWandsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_shield
-            If GUICtrlRead($GUISalvageShieldsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_offhand
-            If GUICtrlRead($GUISalvageFocusItemsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_chestpiece, $item_type_boots, $item_type_gloves, $item_type_headpiece, $item_type_leggins
-            If GUICtrlRead($GUISalvageArmorCheckbox) = $GUI_CHECKED Then Return True
-    EndSwitch
     Return False
 EndFunc
 
 ; Function to check if an item should be sold based on Sell tab GUI
 Func CanSellByGui($aItemPtr)
     Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
-    Local $lItemType = GetItemInfoByPtr($aItemPtr, "ItemType")
-    ; Rarity checkboxes
+    ; Only use rarity checkboxes
     If $lRarity = $rarity_gold And GUICtrlRead($GUISellGoldCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_purple And GUICtrlRead($GUISellPurpleCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_blue And GUICtrlRead($GUISellBlueCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_green And GUICtrlRead($GUISellGreenCheckbox) = $GUI_CHECKED Then Return True
     If $lRarity = $rarity_white And GUICtrlRead($GUISellWhiteCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_gray And GUICtrlRead($GUISellGrayCheckbox) = $GUI_CHECKED Then Return True
-    ; Weapon type checkboxes
-    Switch $lItemType
-        Case $item_type_axe
-            If GUICtrlRead($GUISellAxesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_bow
-            If GUICtrlRead($GUISellBowsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_sword
-            If GUICtrlRead($GUISellSwordsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_hammer
-            If GUICtrlRead($GUISellHammersCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_daggers
-            If GUICtrlRead($GUISellDaggersCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_scythe
-            If GUICtrlRead($GUISellScythesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_staff
-            If GUICtrlRead($GUISellStavesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_wand
-            If GUICtrlRead($GUISellWandsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_shield
-            If GUICtrlRead($GUISellShieldsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_offhand
-            If GUICtrlRead($GUISellFocusItemsCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_chestpiece, $item_type_boots, $item_type_gloves, $item_type_headpiece, $item_type_leggins
-            If GUICtrlRead($GUISellArmorCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_rune_and_mod
-            If GUICtrlRead($GUISellRunesCheckbox) = $GUI_CHECKED Then Return True
-        Case $item_type_key
-            If GUICtrlRead($GUISellInsigniasCheckbox) = $GUI_CHECKED Then Return True
-    EndSwitch
-    ; Special items
-    If IsMaterial($aItemPtr) And GUICtrlRead($GUISellMaterialsCheckbox) = $GUI_CHECKED Then Return True
-    If IsKey($aItemPtr) And GUICtrlRead($GUISellKeysCheckbox) = $GUI_CHECKED Then Return True
-    If IsScroll($aItemPtr) And GUICtrlRead($GUISellScrollsCheckbox) = $GUI_CHECKED Then Return True
-    If IsConsumable($aItemPtr) And GUICtrlRead($GUISellConsumablesCheckbox) = $GUI_CHECKED Then Return True
-    ; Dyes
-    Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
-    If $lModelID = $ITEM_ID_Dyes And GUICtrlRead($GUISellDyesCheckbox) = $GUI_CHECKED Then Return True
     Return False
 EndFunc
 

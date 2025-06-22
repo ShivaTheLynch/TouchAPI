@@ -29,14 +29,14 @@ Func GetSkillbarPtrByHeroID($aHeroId)
 EndFunc   ;==>GetSkillbarPtrByHeroID
 
 #Region Skills
-Func UseSkillEx($aSkillSlot, $aTarget = -2, $aTimeout = 3000, $aCallTarget = False, $aSkillbarPtr = GetSkillbarPtr())
+Func UseSkillEx($aSkillSlot, $aTarget = -2, $aTimeout = 3000, $aCallTarget = True, $aSkillbarPtr = GetSkillbarPtr())
 	Local $lDeadlock = TimerInit(), $lAgentID = ID($aTarget), $lMe = GetAgentPtr(-2)
 	Local $lSkill = GetSkillPtr(GetSkillbarSkillID($aSkillSlot, 0, $aSkillbarPtr))
 	If $lAgentID = 0 Or GetIsDead($lMe) Or Not IsRecharged($aSkillSlot, $aSkillbarPtr) Then Return
 	If GetEnergy($lMe) < GetEnergyReq($lSkill) Then Return
 	
 	If $lAgentID <> GetMyID() Then ChangeTarget($lAgentID)
-	UseSkill($aSkillSlot, $lAgentID, $aCallTarget)
+	UseSkill($aSkillSlot, $lAgentID)
 	Do
 		Sleep(50)
 		If GetIsDead($lAgentID) Or GetIsDead($lMe) Then Return		
