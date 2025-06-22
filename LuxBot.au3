@@ -95,6 +95,9 @@ Global $StatDeathsLabel, $StatTotalRunsLabel, $StatTotalRunTimeLabel, $StatAvgRu
 Global $StatGoldsLabel, $StatPurplesLabel, $StatBluesLabel, $StatWhitesLabel
 Global $StatLuxonFactionLabel, $StatLuxonDonatedLabel
 Global $StatCurrentGoldLabel, $StatGoldPickedUpLabel
+
+; Add a timer-based update for live coordinates in Extra tab
+Global $ExtraStatsUpdateTimer = TimerInit()
 #EndRegion Declaration
 
 #Region ### START Koda GUI section ### Form=
@@ -228,7 +231,33 @@ GUICtrlSetColor(-1, 0x99B2FF)
 GUICtrlSetBkColor(-1, 0x23272A)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Tab 4: Run Options & Loot
+; Tab 4: Extra Log
+GUICtrlCreateTabItem("Extra")
+$GroupExtraLog = GUICtrlCreateGroup("Extra Log", 16, 40, 360, 520)
+$GUIExtraEdit = GUICtrlCreateEdit("", 32, 64, 328, 480)
+GUICtrlSetData(-1, "")
+GUICtrlSetColor(-1, 0xFFB266)
+GUICtrlSetBkColor(-1, 0x23272A)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+; Extra statistics group (styled like Character tab)
+$GroupExtraStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 180)
+$ExtraStatCoordsLabel = GUICtrlCreateLabel("Coords: (0, 0)", 420, 60, 200, 20)
+$ExtraStatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 80, 150, 20)
+$ExtraStatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 100, 150, 20)
+$ExtraStatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 120, 150, 20)
+$ExtraStatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 140, 150, 20)
+$ExtraStatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
+$ExtraStatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
+$ExtraStatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
+$ExtraStatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
+$ExtraStatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 160, 200, 20)
+$ExtraStatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
+$ExtraStatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: 0", 420, 180, 150, 20)
+$ExtraStatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: 0", 600, 160, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
+; Tab 5: Run Options & Loot
 GUICtrlCreateTabItem("Settings")
 $Group4 = GUICtrlCreateGroup("Run Options", 16, 40, 380, 120)
 
@@ -387,37 +416,6 @@ GUICtrlSetOnEvent($GUIMaterialsOnlyButton, "GuiButtonHandler")
 $GUISpecialOnlyButton = GUICtrlCreateButton("Special Only", 530, 424, 100, 25)
 GUICtrlSetOnEvent($GUISpecialOnlyButton, "GuiButtonHandler")
 
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
-; Tab 5: Salvage
-GUICtrlCreateTabItem("Salvage")
-$GroupSalvage = GUICtrlCreateGroup("Salvage Items", 16, 40, 760, 520)
-
-; Salvage Item Rarity
-$SalvageRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 350, 120)
-$GUISalvageGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 48, 88, 150, 20)
-$GUISalvagePurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 112, 150, 20)
-$GUISalvageBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 136, 150, 20)
-$GUISalvageGreenCheckbox = GUICtrlCreateCheckbox("Green Items (Uncommon)", 48, 160, 150, 20)
-$GUISalvageWhiteCheckbox = GUICtrlCreateCheckbox("White Items (Common)", 220, 88, 150, 20)
-$GUISalvageGrayCheckbox = GUICtrlCreateCheckbox("Gray Items (Junk)", 220, 112, 150, 20)
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
-; Salvage Weapon Types (excluding Runes and Insignias)
-$SalvageWeaponTypeGroup = GUICtrlCreateGroup("Weapon Types", 32, 200, 350, 180)
-$GUISalvageSwordsCheckbox = GUICtrlCreateCheckbox("Swords", 48, 224, 100, 20)
-$GUISalvageAxesCheckbox = GUICtrlCreateCheckbox("Axes", 48, 248, 100, 20)
-$GUISalvageHammersCheckbox = GUICtrlCreateCheckbox("Hammers", 48, 272, 100, 20)
-$GUISalvageDaggersCheckbox = GUICtrlCreateCheckbox("Daggers", 48, 296, 100, 20)
-$GUISalvageScythesCheckbox = GUICtrlCreateCheckbox("Scythes", 48, 320, 100, 20)
-$GUISalvageBowsCheckbox = GUICtrlCreateCheckbox("Bows", 160, 224, 100, 20)
-$GUISalvageWandsCheckbox = GUICtrlCreateCheckbox("Wands", 160, 248, 100, 20)
-$GUISalvageStavesCheckbox = GUICtrlCreateCheckbox("Staves", 160, 272, 100, 20)
-$GUISalvageShieldsCheckbox = GUICtrlCreateCheckbox("Shields", 160, 296, 100, 20)
-$GUISalvageFocusItemsCheckbox = GUICtrlCreateCheckbox("Focus Items", 160, 320, 100, 20)
-$GUISalvageArmorCheckbox = GUICtrlCreateCheckbox("Armor", 272, 224, 100, 20)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
@@ -1248,6 +1246,12 @@ While $BotRunning
 		$LastSkillUpdate = TimerInit()
 	EndIf
 	
+	; Live update for Extra tab statistics (coordinates)
+	If TimerDiff($ExtraStatsUpdateTimer) > 200 Then
+		UpdateExtraStatisticsDisplay()
+		$ExtraStatsUpdateTimer = TimerInit()
+	EndIf
+	
 	EnsureInFortAspenwoodLuxon()
 	Sleep(5000)
 WEnd
@@ -1259,6 +1263,33 @@ Func Out($TEXT)
     If $TEXTLEN + $CONSOLELEN > 30000 Then GUICtrlSetData($GUIActionsEditExtended, StringRight(_GUICtrlEdit_GetText($GUIActionsEditExtended), 30000 - $TEXTLEN - 1000))
     _GUICtrlEdit_AppendText($GUIActionsEditExtended, @CRLF & $TIME & $TEXT)
     _GUICtrlEdit_Scroll($GUIActionsEditExtended, 1)
+EndFunc
+
+; Log to Extra tab
+Func OutExtra($TEXT)
+    Local $TIME = "[" & @HOUR & ":" & @MIN & ":" & @SEC & "] - "
+    Local $TEXTLEN = StringLen($TEXT)
+    Local $CONSOLELEN = _GUICtrlEdit_GetTextLen($GUIExtraEdit)
+    If $TEXTLEN + $CONSOLELEN > 30000 Then GUICtrlSetData($GUIExtraEdit, StringRight(_GUICtrlEdit_GetText($GUIExtraEdit), 30000 - $TEXTLEN - 1000))
+    _GUICtrlEdit_AppendText($GUIExtraEdit, @CRLF & $TIME & $TEXT)
+    _GUICtrlEdit_Scroll($GUIExtraEdit, 1)
+    UpdateExtraStatisticsDisplay()
+EndFunc
+
+Func UpdateExtraStatisticsDisplay2()
+    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & X(-2) & ", " & Y(-2) & ")")
+    GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
+    GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+    GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+    GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+    GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+    GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+    GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
+    GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+    GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+    GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+    GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+    GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
 EndFunc
 
 Func _Exit()
@@ -1334,8 +1365,9 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     Local $lEnemyCount = 0
     Local $lDestinationReached = False
     Local $lInCombat = False
-    Local $stepSize = 100 ; units per step for smooth movement
-
+    Local $stepSize = 1000 ; units per step for smooth movement
+    Local $lastMoveToX = $aX
+    Local $lastMoveToY = $aY
     ; Log the action
     If $aDescription <> "" Then
         Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
@@ -1347,6 +1379,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     While Not $lDestinationReached
         If GetIsDead($lMe) Then
             Out("Player is dead, stopping combat")
+            OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $lastMoveToX & ", " & $lastMoveToY & ")")
             Return False
         EndIf
         Local $curX = X(-2)
@@ -1379,6 +1412,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
     Do
         If GetIsDead($lMe) Then
             Out("Player is dead, stopping combat")
+            OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $lastMoveToX & ", " & $lastMoveToY & ")")
             Return False
         EndIf
         If GetDistanceToXY($aX, $aY, $lMe) < 100 Then
@@ -1394,6 +1428,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
             Do
                 If GetIsDead($lMe) Then
                     Out("Player is dead during combat")
+                    OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $lastMoveToX & ", " & $lastMoveToY & ")")
                     Return False
                 EndIf
                 $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $aRange)
@@ -1420,6 +1455,7 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
                 While Not $lDestinationReached
                     If GetIsDead($lMe) Then
                         Out("Player is dead, stopping combat")
+                        OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $lastMoveToX & ", " & $lastMoveToY & ")")
                         Return False
                     EndIf
                     Local $curX = X(-2)
@@ -2376,6 +2412,7 @@ Func CheckAndResurrectPartyMembers()
 	; If we have dead members, wait for them to be resurrected
 	If $deadMembers > 0 Then
 		Out("Found " & $deadMembers & " dead party member(s), waiting for resurrection by other party members...")
+		OutExtra("Team is dead at (" & X(-2) & ", " & Y(-2) & ") waiting for resurrection. Last move target: (" & $lastMoveToX & ", " & $lastMoveToY & ")")
 		
 		; Wait for all dead members to be resurrected
 		Local $resurrectionTimer = TimerInit()
@@ -2441,5 +2478,22 @@ Func UpdateStatisticsDisplay()
     GUICtrlSetData($StatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
     GUICtrlSetData($StatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
     GUICtrlSetData($StatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+    UpdateExtraStatisticsDisplay()
+EndFunc
+
+Func UpdateExtraStatisticsDisplay()
+    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & X(-2) & ", " & Y(-2) & ")")
+    GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
+    GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+    GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+    GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+    GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+    GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+    GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
+    GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+    GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+    GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+    GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+    GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
 EndFunc
 
