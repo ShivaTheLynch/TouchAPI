@@ -2099,12 +2099,12 @@ Func VanquishMountQinkai()
 	
 	Out('Area vanquished successfully!')
 	
-	; Force travel back to Fort Aspenwood (map 389) after vanquish completion
+	; Always travel back to Fort Aspenwood after vanquish attempt
 	Out("Vanquish complete! Traveling back to Fort Aspenwood to restart...")
 	RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
 	WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
 	RndSleep(2000)
-	
+	$LastVanquishComplete = TimerInit()
 	Out("Successfully returned to Fort Aspenwood. Restarting vanquish process...")
 	Return 0
 EndFunc
