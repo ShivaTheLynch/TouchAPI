@@ -1695,7 +1695,6 @@ Func VanquishMountQinkai()
 	
 	; Check if we're starting in Mount Qinkai and need to find the closest starting point
 	Local $startingInMountQinkai = (GetMapID() = 200)
-	Local $cameFromTown = False
 	
 	Out("Current map ID: " & GetMapID() & " (200 = Mount Qinkai)")
 	
@@ -1705,7 +1704,7 @@ Func VanquishMountQinkai()
 	
 	If $distanceFromSpawn < 2000 Then
 		Out("Near spawn point, getting blessing first!")
-		$cameFromTown = True ; Mark that we came from town
+		$CameFromTown = True ; Mark that we came from town
 		Move(-8394, -9801) ; Move to blessing coordinates
 		RndSleep(2000)
 		
@@ -1778,7 +1777,7 @@ Func VanquishMountQinkai()
 	; Determine starting index for vanquish loop
 	Local $startIndex = 0
 	
-	If $cameFromTown Then
+	If $CameFromTown Then
 		; If we came from town (got blessing), start from index 0
 		Out("Came from town with blessing, starting vanquish from index 0")
 		$startIndex = 0
