@@ -2458,7 +2458,7 @@ Func GetRandomGameJoke()
 EndFunc
 ;~ Description: Move to coordinates and kill all enemies in range
 ;~ Parameters: $aX, $aY = Target coordinates, $aDescription = Description for logging, $aRange = Attack range (default: $RANGE_SPELLCAST)
-Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRandom = 50, $a_aAllies = 0)
+Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPIRIT, $aRandom = 50, $a_aAllies = 0)
     Local $l_iBlocked = 0
     Local $l_iDestX = $aX + Random(-$aRandom, $aRandom)
     Local $l_iDestY = $aY + Random(-$aRandom, $aRandom)
@@ -2475,9 +2475,10 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRand
     Do
         ; Enemy detection logic
         If Mod($l_iIterationCount, $l_iCheckInterval) == 0 Then
-            Local $l_aEnemiesInRange = GetAgentPtrArray(3, 0xDB, 3, 1200)
-            If $l_aEnemiesInRange[0] > 0 Then
-                ; If enemies are detected, engage in combat
+            ; Keep fighting as long as there are enemies in range
+            While True
+                Local $l_aEnemiesInRange = GetAgentPtrArray(3, 0xDB, 3, 1200)
+                If $l_aEnemiesInRange[0] = 0 Then ExitLoop
                 For $i = 1 To $l_aEnemiesInRange[0]
                     Local $target = $l_aEnemiesInRange[$i]
                     If Not GetIsDead($target) Then
@@ -2490,9 +2491,9 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRand
                         WEnd
                     EndIf
                 Next
-                ; After fighting, resume movement to original destination
-                Move($l_iDestX, $l_iDestY, 0)
-            EndIf
+            WEnd
+            ; After fighting, resume movement to original destination
+            Move($l_iDestX, $l_iDestY, 0)
         EndIf
 
         If MoveX(-2) == 0 And MoveY(-2) == 0 Then
