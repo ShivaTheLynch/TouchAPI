@@ -1298,11 +1298,17 @@ While $BotRunning
         Out("Ready to start new vanquish run from Fort Aspenwood!")
         $ReadyToStartRun = False
         $VanquishInProgress = True
-        EnsureInFortAspenwoodLuxon()
+        
+        ; Travel to Mount Qinkai first
+        Out("Traveling to Mount Qinkai to start vanquish...")
+        SetHardModeForTravel()
+        MoveOut() ; This function travels to Mount Qinkai and starts vanquish
+        
         $VanquishInProgress = False
         $LastVanquishComplete = TimerInit()
         ; Set flag to start next run after this one completes
         $ReadyToStartRun = True
+        Out("Vanquish run completed, ready for next run!")
     EndIf
     
     ; Removed the 5-second sleep that was blocking updates
@@ -1661,6 +1667,7 @@ Func VanquishMountQinkai()
 		[0, -9500, 'Rot Wallow 4'], _
 		[5000, -7000, 'Oni 1'], _
 		[6500, -8500, 'Oni 2'], _
+		[6100, -8708, 'Oni 2 Helper'], _
 		[5000, -3500, 'Leftovers'], _
 		[500, -2000, 'Leftovers'], _
 		[-1500, -3000, 'Naga 1'], _
@@ -1684,7 +1691,7 @@ Func VanquishMountQinkai()
 	]
 	
 	; Define ranges for each location (most use default, some use spirit range)
-	Local $ranges[] = [$RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT]
+	Local $ranges[] = [$RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT, $RANGE_SPIRIT]
 	
 	; Check if we're starting in Mount Qinkai and need to find the closest starting point
 	Local $startingInMountQinkai = (GetMapID() = 200)
@@ -1970,6 +1977,8 @@ Func VanquishMountQinkai()
 	RndSleep(2000)
 	$LastVanquishComplete = TimerInit()
 	Out("Successfully returned to Fort Aspenwood. Vanquish run complete. Waiting for next run...")
+	; Set flag to continue the loop
+	$ReadyToStartRun = True
 	Return 0
 EndFunc
 
