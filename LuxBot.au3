@@ -180,6 +180,9 @@ WEnd
 ; Call CheckMapAndStartVanquish() ONCE before entering the main bot loop
 CheckMapAndStartVanquish()
 
+; Always run LuxonFarmSetup at startup to handle inventory and setup
+LuxonFarmSetup()
+
 While $BotRunning
     Sleep(100) ; Reduced from 500ms to 100ms for more responsive updates
     ; Auto-update skillbar if enabled
