@@ -102,62 +102,6 @@ EndFunc
 ; Before RndTravel($MAP_ID_EYE_OF_THE_NORTH ) and RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
 ; Instruct user to add SetHardModeForTravel() before those calls in TouchAddons.au3 if needed.
 
-; Patch DonateFactionManual
-Func DonateFactionManual()
-    ; Check if bot is initialized
-    If Not $BotInitialized Then
-        Out("Please initialize the bot first by clicking Start")
-        Return
-    EndIf
-    
-    ; Check current faction
-    Local $currentFaction = GetLuxonFaction()
-    Out("Current Luxon faction: " & $currentFaction)
-    
-    If $currentFaction < 5000 Then
-        Out("Faction is below 5000, no donation needed")
-        Return
-    EndIf
-    
-    Out("Traveling to Cavalon to donate faction")
-    SetHardModeForTravel()
-    RndTravel($MAP_ID_CAVALON)
-    WaitMapLoading($MAP_ID_CAVALON, 10000, 2000)
-    RndSleep(200)
-    
-    ; Find and interact with faction NPC
-    GoToNPCNearXY(9076, -1111)
-    
-    Out("Donating Luxon faction")
-    Local $donations = 0
-    While GetLuxonFaction() >= 5000
-        DonateFaction('Luxon')
-        RndSleep(500)
-        $donations += 1
-        Out("Donation " & $donations & " completed. Current faction: " & GetLuxonFaction())
-        ; Update Luxon faction stats after each donation
-        $Stat_LuxonFaction = GetLuxonFaction()
-        $Stat_LuxonFactionMax = GetMaxLuxonFaction()
-        UpdateStatisticsDisplay()
-    WEnd
-    
-    Out("Faction donation complete! Total donations: " & $donations)
-    Out("Final faction: " & GetLuxonFaction())
-    
-    ; Return to Fort Aspenwood
-    Out("Returning to Fort Aspenwood")
-    SetHardModeForTravel()
-    RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
-    WaitMapLoading($MAP_ID_FORT_ASPENWOOD_LUXON, 10000, 2000)
-    RndSleep(500)
-    
-    Out("Manual faction donation finished")
-    ; Update Luxon faction stats after donation process
-    $Stat_LuxonFaction = GetLuxonFaction()
-    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
-    UpdateStatisticsDisplay()
-EndFunc
-
 Func RndTravel($aMapID)
 	Local $UseDistricts = 7 ; 7=eu, 8=eu+int, 11=all(incl. asia)
 	; Region/Language order: eu-en, eu-fr, eu-ge, eu-it, eu-sp, eu-po, eu-ru, int, asia-ko, asia-ch, asia-ja

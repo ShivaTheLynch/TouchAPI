@@ -22,10 +22,6 @@ GUICtrlSetOnEvent($GUIInitializeButton, "GuiButtonHandler")
 $GUIStartBotButton = GUICtrlCreateButton("Start Bot", 120, 104, 75, 25)
 GUICtrlSetOnEvent($GUIStartBotButton, "GuiButtonHandler")
 GUICtrlSetState($GUIStartBotButton, $GUI_DISABLE) ; Disabled until initialized
-$GUIDonateFactionButton = GUICtrlCreateButton("DONATE FACTION", 200, 104, 120, 25)
-GUICtrlSetOnEvent($GUIDonateFactionButton, "GuiButtonHandler")
-GUICtrlSetBkColor($GUIDonateFactionButton, 0xFF0000) ; Red background
-GUICtrlSetColor($GUIDonateFactionButton, 0xFFFFFF) ; White text
 $gOnTopCheckbox = GUICtrlCreateCheckbox("On Top", 250, 103, 81, 24)
 GUICtrlSetState(-1, $GUI_CHECKED)
 
@@ -454,34 +450,6 @@ Func GuiButtonHandler()
             $BotRunning = True
             GUICtrlSetState($GUIStartBotButton, $GUI_DISABLE)
             Out("Bot loop started.")
-
-        Case $GUIDonateFactionButton
-            Out("Manual faction donation requested")
-            ; Initialize bot if not already initialized
-            If Not $BotInitialized Then
-                Out("Initializing bot for faction donation...")
-                Local $charName = GUICtrlRead($GUINameCombo)
-                If $charName=="" Then
-                    If Initialize(ProcessExists("gw.exe"), True, False, False) = 0 Then
-                        MsgBox(0, "Error", "Guild Wars is not running.")
-                        Return
-                    EndIf
-                ElseIf $ProcessID Then
-                    $proc_id_int = Number($ProcessID, 2)
-                    If Initialize($proc_id_int, True, False, False) = 0 Then
-                        MsgBox(0, "Error", "Could not Find a ProcessID or somewhat '"&$proc_id_int&"'  "&VarGetType($proc_id_int)&"'")
-                        Return
-                    EndIf
-                Else
-                    If Initialize($CharName, True, False, False) = 0 Then
-                        MsgBox(0, "Error", "Could not Find a Guild Wars client with a Character named '"&$CharName&"'")
-                        Return
-                    EndIf
-                EndIf
-                $BotInitialized = True
-                Out("Bot initialized successfully for faction donation")
-            EndIf
-            DonateFactionManual()
 
         Case $GUIUpdateSkillsButton
             UpdateSkillbarDisplay()
