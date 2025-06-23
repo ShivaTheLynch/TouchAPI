@@ -262,6 +262,8 @@ EndFunc
 ;~ Vanquish the map
 
 Func VanquishMountQinkai()
+	; Track run start time
+	Local $runStartTime = TimerInit()
 	; Define all vanquish locations with their descriptions
 	Local $vanquishLocations[][3] = [ _
 		[-11400, -9000, 'Yetis'], _
@@ -599,11 +601,17 @@ Func VanquishMountQinkai()
 	RndSleep(2000)
 	$LastVanquishComplete = TimerInit()
 	Out("Successfully returned to Fort Aspenwood. Vanquish run complete. Waiting for next run...")
+	; Update run statistics
+	Local $runDuration = Int(TimerDiff($runStartTime) / 1000) ; in seconds
+	$Stat_TotalRuns += 1
+	$Stat_TotalRunTime += $runDuration
+	If $Stat_TotalRuns > 0 Then
+		$Stat_AvgRunTime = Int($Stat_TotalRunTime / $Stat_TotalRuns)
+	EndIf
+	UpdateStatisticsDisplay()
 	; Set flag to continue the loop
 	$ReadyToStartRun = True
 	Return 0
-
-
 EndFunc
 
 

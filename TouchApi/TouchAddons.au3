@@ -2629,7 +2629,7 @@ Func UseCustomFightingOrder($lTarget)
 EndFunc
 
 Func UsePrioritySkills($lTarget)
-    ; First, try to use priority skills
+    ; First, try to use all available priority skills
     For $i = 1 To 8
         Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$i-1]) = $GUI_CHECKED
         Local $skillPriority = GUICtrlRead($SkillPriorityCheckboxes[$i-1]) = $GUI_CHECKED
@@ -2640,10 +2640,9 @@ Func UsePrioritySkills($lTarget)
             UseSkillEx($i, $lTarget, 3000, True)
             HighlightSkillLabel($i)
             RndSleep(200)
-            Return ; Exit after using one priority skill
         EndIf
     Next
-    ; If no priority skills available, use normal skills
+    ; Then, use all available normal (non-priority) skills
     For $i = 1 To 8
         Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$i-1]) = $GUI_CHECKED
         Local $skillPriority = GUICtrlRead($SkillPriorityCheckboxes[$i-1]) = $GUI_CHECKED
@@ -2654,7 +2653,6 @@ Func UsePrioritySkills($lTarget)
             UseSkillEx($i, $lTarget, 3000, True)
             HighlightSkillLabel($i)
             RndSleep(200)
-            Return ; Exit after using one skill
         EndIf
     Next
     ; If no skills are available, main combat loop handles attacking
