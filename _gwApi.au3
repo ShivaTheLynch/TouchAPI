@@ -23,9 +23,9 @@
 
 ;~ include constants
 #include "constants\_constants.au3"
-
+#include "TouchApi\TouchGlob.au3"
 ; GwAu3 includes
-;~ #include "GwAu3\GwAu3\GwAu3_Core.au3"
+;~ #include "GwAu3\GwAu3\GwAu3_Core.au3"dddd
 ;~ #include "GwAu3\GwAu3\GwAu3_GetInfo.au3"
 ;~ #include "GwAu3\GwAu3\GwAu3_ExtraInfo.au3"
 ;~ #include "GwAu3\GwAu3\GwAu3_Packet.au3"
@@ -45,5 +45,7 @@
 #include "gwApi\skills.au3"
 #include "gwApi\misc.au3"
 
-#include "TouchApi/TouchAddons.au3"
-#include "constants/skill_id.au3"
+#include "TouchApi\TouchAddons.au3"
+#include "constants\skill_id.au3"
+#include "TouchApi\complete_skill_names.au3"
+#include "TouchApi\TouchGUI.au3"

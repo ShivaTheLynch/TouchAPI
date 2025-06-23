@@ -2395,3 +2395,494 @@ Func GetMaxImperialFaction()
 	Return $lReturn[1]
 EndFunc   ;==>GetMaxImperialFaction
 #EndRegion Faction
+
+#To be organized
+; Utility function: Min of two values
+Func Min($a, $b)
+    If $a < $b Then
+        Return $a
+    Else
+        Return $b
+    EndIf
+EndFunc
+
+; Function to get a random game joke
+Func GetRandomGameJoke()
+    Local $jokes[] = [ _
+        "Why did the gamer go broke? Because he was spending too much time on his console! 😄", _
+        "What do you call a gamer who's always late? A lag-ger! 🎮", _
+        "Why don't skeletons fight each other? They don't have the guts! 💀", _
+        "What's a gamer's favorite type of music? Heavy metal! 🤘", _
+        "Why did the programmer quit his job? Because he didn't get arrays! 😂", _
+        "What do you call a bear with no teeth? A gummy bear! 🐻", _
+        "Why did the scarecrow win an award? Because he was outstanding in his field! 🌾", _
+        "What do you call a fake noodle? An impasta! 🍝", _
+        "Why don't eggs tell jokes? They'd crack each other up! 🥚", _
+        "What do you call a can opener that doesn't work? A can't opener! 🥫", _
+        "Why did the math book look so sad? Because it had too many problems! 📚", _
+        "What do you call a bear with no ears? B! 🐻", _
+        "Why did the cookie go to the doctor? Because it was feeling crumbly! 🍪", _
+        "What do you call a fish wearing a bowtie? So-fish-ticated! 🐟", _
+        "Why don't scientists trust atoms? Because they make up everything! ⚛️", _
+        "What do you call a dinosaur that crashes his car? Tyrannosaurus wrecks! 🦖", _
+        "Why did the golfer bring two pairs of pants? In case he got a hole in one! ⛳", _
+        "What do you call a sleeping bull? A bulldozer! 🐂", _
+        "Why did the scarecrow win an award? Because he was outstanding in his field! 🌾", _
+        "What do you call a bear with no teeth? A gummy bear! 🐻", _
+        "Why don't eggs tell jokes? They'd crack each other up! 🥚", _
+        "What do you call a fake noodle? An impasta! 🍝", _
+        "Why did the math book look so sad? Because it had too many problems! 📚", _
+        "What do you call a can opener that doesn't work? A can't opener! 🥫", _
+        "Why did the cookie go to the doctor? Because it was feeling crumbly! 🍪", _
+        "What do you call a fish wearing a bowtie? So-fish-ticated! 🐟", _
+        "Why don't scientists trust atoms? Because they make up everything! ⚛️", _
+        "What do you call a dinosaur that crashes his car? Tyrannosaurus wrecks! 🦖", _
+        "Why did the golfer bring two pairs of pants? In case he got a hole in one! ⛳", _
+        "What do you call a sleeping bull? A bulldozer! 🐂", _
+        "Why did the scarecrow win an award? Because he was outstanding in his field! 🌾", _
+        "What do you call a bear with no teeth? A gummy bear! 🐻", _
+        "Why don't eggs tell jokes? They'd crack each other up! 🥚", _
+        "What do you call a fake noodle? An impasta! 🍝", _
+        "Why did the math book look so sad? Because it had too many problems! 📚", _
+        "What do you call a can opener that doesn't work? A can't opener! 🥫", _
+        "Why did the cookie go to the doctor? Because it was feeling crumbly! 🍪", _
+        "What do you call a fish wearing a bowtie? So-fish-ticated! 🐟", _
+        "Why don't scientists trust atoms? Because they make up everything! ⚛️", _
+        "What do you call a dinosaur that crashes his car? Tyrannosaurus wrecks! 🦖", _
+        "Why did the golfer bring two pairs of pants? In case he got a hole in one! ⛳", _
+        "What do you call a sleeping bull? A bulldozer! 🐂" _
+    ]
+    
+    Local $randomIndex = Random(0, UBound($jokes) - 1, 1)
+    Return $jokes[$randomIndex]
+EndFunc
+
+;~ Description: Move to coordinates and kill all enemies in range
+;~ Parameters: $aX, $aY = Target coordinates, $aDescription = Description for logging, $aRange = Attack range (default: $RANGE_SPELLCAST)
+Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
+    Local $lMe = GetAgentPtr(-2)
+    Local $currentTargetID = 0
+    Local $lInCombat = False
+    Local $lDestinationReached = False
+    Local $combatCheckRange = $aRange
+    
+    If $aDescription <> "" Then
+        Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
+    Else
+        Out("Moving to kill enemies at (" & $aX & ", " & $aY & ")")
+    EndIf
+
+    While Not $lDestinationReached
+        If GetIsDead($lMe) Then
+            Out("Player is dead, stopping combat")
+            OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $aX & ", " & $aY & ")")
+            Return False
+        EndIf
+        
+        ; Check for enemies in range
+        Local $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $combatCheckRange)
+        If $lEnemyCount > 0 Then
+            If Not $lInCombat Then
+                Out("Found " & $lEnemyCount & " enemies, engaging combat!")
+                $lInCombat = True
+            EndIf
+            ; Combat loop
+            Do
+                If GetIsDead($lMe) Then
+                    Out("Player is dead during combat")
+                    OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $aX & ", " & $aY & ")")
+                    Return False
+                EndIf
+                $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $combatCheckRange)
+                If $lEnemyCount = 0 Then
+                    Out("Combat complete, resuming movement to target")
+                    $lInCombat = False
+                    ExitLoop
+                EndIf
+                Local $lTarget = GetNearestEnemyPtrToAgent(-2)
+                If $lTarget <> 0 And Not GetIsDead($lTarget) Then
+                    Local $targetID = ID($lTarget)
+                    If $targetID <> $currentTargetID Then
+                        ChangeTarget($lTarget)
+                        Attack($lTarget, True)
+                        $currentTargetID = $targetID
+                        Out("Switched to new target: " & GetPlayerName($lTarget))
+                    EndIf
+                    If GetDistance($lTarget, -2) <= $RANGE_SPELLCAST Then
+                        UseSkillsWithPriorityAndCustomOrder($lTarget)
+                    EndIf
+                EndIf
+                UpdateExtraStatisticsDisplay()
+                Sleep(10)
+            Until False
+            PickUpLoot()
+            Out("Checking for dead party members after combat...")
+            CheckAndResurrectPartyMembers()
+        Else
+            ; Move directly to destination
+            Local $curX = X(-2)
+            Local $curY = Y(-2)
+            Local $dist = GetDistanceToXY($aX, $aY, -2)
+            If $dist < 100 Then
+                $lDestinationReached = True
+                ExitLoop
+            EndIf
+            MoveTo($aX, $aY, 50)
+            UpdateExtraStatisticsDisplay()
+            Sleep(10)
+        EndIf
+    WEnd
+    Out("Reached destination at (" & $aX & ", " & $aY & ")")
+    Out("🎮 " & GetRandomGameJoke())
+    $Stat_LuxonFaction = GetLuxonFaction()
+    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
+    $Stat_CurrentGold = GetGoldCharacter()
+    UpdateStatisticsDisplay()
+    Return True
+EndFunc
+
+; Function to build skill name array from constants
+Func BuildSkillNameArray()
+    Out("Building comprehensive skill name array from constants...")
+    
+    ; Clear the array first
+    For $i = 0 To UBound($SkillNameArray) - 1
+        $SkillNameArray[$i] = ""
+    Next
+    
+    Out("Skill name array built with " & UBound($SkillNameArray) & " entries")
+EndFunc
+
+; Function to get skill name from ID using the array
+Func GetSkillNameFromArray($skillID)
+    If $skillID >= 0 And $skillID < UBound($SkillNameArray) Then
+        If $SkillNameArray[$skillID] <> "" Then
+            Return $SkillNameArray[$skillID]
+        EndIf
+    EndIf
+    Return "Unknown Skill (" & $skillID & ")"
+EndFunc
+
+Func UpdateSkillbarDisplay()
+    If Not $BotInitialized Then
+        Out("Bot not initialized, showing placeholder skill names")
+        ; Show placeholder names when bot is not initialized
+        For $i = 0 To 7
+            GUICtrlSetData($SkillNames[$i], "Slot " & ($i + 1))
+        Next
+        Return
+    EndIf
+    
+    Out("Updating skillbar display...")
+    For $i = 0 To 7
+        Local $skillID = GetSkillbarSkillID($i + 1)
+        Local $skillName = GetSkillNameFromArray($skillID)
+        
+        ; Show skill name from array
+        GUICtrlSetData($SkillNames[$i], $skillName)
+        
+        ; Debug output to help identify issues
+        Out("Skill " & ($i + 1) & ": ID=" & $skillID & ", Name='" & $skillName & "'")
+    Next
+    Out("Skillbar updated successfully")
+EndFunc
+
+; Function to initialize skill names when GUI is first created
+Func InitializeSkillNames()
+    Out("Initializing skill names display...")
+    
+    ; Set placeholder names
+    For $i = 0 To 7
+        GUICtrlSetData($SkillNames[$i], "Slot " & ($i + 1))
+    Next
+    Out("Skill names initialized with placeholders")
+EndFunc
+
+Func UpdateCustomFightingList()
+    ; Clear the list
+    GUICtrlSetData($GUICustomFightingList, "")
+    
+    ; Add skills in custom order (with safety check)
+    If $CustomFightingCount > 0 Then
+        For $i = 0 To $CustomFightingCount - 1
+            Local $skillSlot = $CustomFightingOrder[$i]
+            Local $skillID = GetSkillbarSkillID($skillSlot)
+            Local $skillName = GetSkillNameFromArray($skillID)
+            Local $listItem = $skillSlot & ": " & $skillName
+            GUICtrlSetData($GUICustomFightingList, $listItem)
+        Next
+    EndIf
+EndFunc
+
+Func UseSkillsWithPriorityAndCustomOrder($lTarget)
+    ; If custom fighting is enabled, use custom order
+    If $CustomFightingEnabled And $CustomFightingCount > 0 Then
+        UseCustomFightingOrder($lTarget)
+    Else
+        ; Use normal priority-based skill usage
+        UsePrioritySkills($lTarget)
+    EndIf
+EndFunc
+
+Func UseCustomFightingOrder($lTarget)
+    ; Check if we have any skills in custom order
+    If $CustomFightingCount <= 0 Then
+        ; No skills available, just return (main loop handles attacking)
+        Return
+    EndIf
+    ; Use skills in the custom fighting order
+    Local $skillSlot = $CustomFightingOrder[$CurrentCustomSkillIndex]
+    Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$skillSlot - 1]) = $GUI_CHECKED
+    Local $skillRecharged = IsRecharged($skillSlot)
+    Local $skillEnergy = GetEnergy(-2)
+    Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($skillSlot))
+    If $skillEnabled And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
+        ; Use the skill
+        UseSkillEx($skillSlot, $lTarget, 3000, false)
+        HighlightSkillLabel($skillSlot)
+        RndSleep(200)
+        $CurrentCustomSkillIndex += 1
+        If $CurrentCustomSkillIndex >= $CustomFightingCount Then
+            $CurrentCustomSkillIndex = 0 ; Reset to beginning
+        EndIf
+    Else
+        $CurrentCustomSkillIndex += 1
+        If $CurrentCustomSkillIndex >= $CustomFightingCount Then
+            $CurrentCustomSkillIndex = 0 ; Reset to beginning
+        EndIf
+    EndIf
+    ; Main combat loop handles attacking, no need to call Attack here
+EndFunc
+
+Func UsePrioritySkills($lTarget)
+    ; First, try to use priority skills
+    For $i = 1 To 8
+        Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$i-1]) = $GUI_CHECKED
+        Local $skillPriority = GUICtrlRead($SkillPriorityCheckboxes[$i-1]) = $GUI_CHECKED
+        Local $skillRecharged = IsRecharged($i)
+        Local $skillEnergy = GetEnergy(-2)
+        Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($i))
+        If $skillPriority And $skillEnabled And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
+            UseSkillEx($i, $lTarget, 3000, True)
+            HighlightSkillLabel($i)
+            RndSleep(200)
+            Return ; Exit after using one priority skill
+        EndIf
+    Next
+    ; If no priority skills available, use normal skills
+    For $i = 1 To 8
+        Local $skillEnabled = GUICtrlRead($SkillCheckboxes[$i-1]) = $GUI_CHECKED
+        Local $skillPriority = GUICtrlRead($SkillPriorityCheckboxes[$i-1]) = $GUI_CHECKED
+        Local $skillRecharged = IsRecharged($i)
+        Local $skillEnergy = GetEnergy(-2)
+        Local $skillEnergyReq = GetEnergyReq(GetSkillbarSkillID($i))
+        If $skillEnabled And Not $skillPriority And $skillRecharged And $skillEnergy >= $skillEnergyReq Then
+            UseSkillEx($i, $lTarget, 3000, True)
+            HighlightSkillLabel($i)
+            RndSleep(200)
+            Return ; Exit after using one skill
+        EndIf
+    Next
+    ; If no skills are available, main combat loop handles attacking
+EndFunc
+
+; Function to check for dead party members and wait for them to be resurrected
+Func CheckAndResurrectPartyMembers()
+	Local $deadMembers = 0
+	Local $deadPartyMembers[1] = [0] ; Array to store dead member agent IDs
+	
+	; Check all party members for dead status
+	Local $partySize = GetPartySize()
+	
+	; Check heroes (party members 1 to party size)
+	For $i = 1 To $partySize
+		Local $memberAgentID = 0
+		
+		 ; Get agent ID for this party member
+		If $i = 1 Then
+			; Player character
+			$memberAgentID = GetMyID()
+		Else
+			; Hero (party member number - 1 for hero array)
+			$memberAgentID = GetMyPartyHeroInfo($i - 1, "AgentID")
+		EndIf
+		
+		; Check if this member is dead
+		If $memberAgentID <> 0 And GetIsDead($memberAgentID) Then
+			$deadMembers += 1
+			ReDim $deadPartyMembers[$deadMembers + 1]
+			$deadPartyMembers[$deadMembers] = $memberAgentID
+			
+			Local $memberName = "Unknown"
+			If $i = 1 Then
+				$memberName = GetPlayerName($memberAgentID)
+			Else
+				; For heroes, we can get the hero name if needed
+				$memberName = "Hero " & ($i - 1)
+			EndIf
+			
+			Out("Found dead party member: " & $memberName & " (Agent ID: " & $memberAgentID & ")")
+		EndIf
+	Next
+	
+	; If we have dead members, wait for them to be resurrected
+	If $deadMembers > 0 Then
+		Out("Found " & $deadMembers & " dead party member(s), waiting for resurrection by other party members...")
+		OutExtra("Team is dead at (" & X(-2) & ", " & Y(-2) & ") waiting for resurrection. Last move target: (" & $lastMoveToX & ", " & $lastMoveToY & ")")
+		
+		; Wait for all dead members to be resurrected
+		Local $resurrectionTimer = TimerInit()
+		Local $allResurrected = False
+		
+		Do
+			; Check if all members are now alive
+			$allResurrected = True
+			For $i = 1 To $deadMembers
+				If GetIsDead($deadPartyMembers[$i]) Then
+					$allResurrected = False
+					ExitLoop
+				EndIf
+			Next
+			
+			; If all are resurrected, break the loop
+			If $allResurrected Then
+				Out("All party members have been resurrected!")
+				ExitLoop
+			EndIf
+			
+			; Wait a bit before checking again
+			RndSleep(2000)
+			
+			; Check for timeout (2 minutes)
+			If TimerDiff($resurrectionTimer) > 120000 Then
+				Out("Warning: Timeout reached waiting for resurrection. Continuing anyway...")
+				ExitLoop
+			EndIf
+			
+		Until False
+		
+		; Final status report
+		Local $stillDead = 0
+		For $i = 1 To $deadMembers
+			If GetIsDead($deadPartyMembers[$i]) Then
+				$stillDead += 1
+			EndIf
+		Next
+		
+		If $stillDead > 0 Then
+			Out("Warning: " & $stillDead & " party member(s) still dead after waiting period")
+		Else
+			Out("All party members successfully resurrected by other party members!")
+		EndIf
+		
+		Return True
+	EndIf
+	
+	Return True ; No dead members found
+EndFunc
+
+Func UpdateStatisticsDisplay()
+    GUICtrlSetData($StatDeathsLabel, "Deaths: " & $Stat_Deaths)
+    GUICtrlSetData($StatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+    GUICtrlSetData($StatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+    GUICtrlSetData($StatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+    GUICtrlSetData($StatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+    GUICtrlSetData($StatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+    GUICtrlSetData($StatBluesLabel, "Blues picked up: " & $Stat_Blues)
+    GUICtrlSetData($StatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+    GUICtrlSetData($StatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+    GUICtrlSetData($StatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+    GUICtrlSetData($StatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+    GUICtrlSetData($StatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+    UpdateExtraStatisticsDisplay()
+EndFunc
+
+; Helper to highlight a skill label when used
+Func HighlightSkillLabel($slot)
+    GUICtrlSetBkColor($SkillLabels[$slot-1], 0xFFFF00) ; Yellow
+    AdlibRegister("_UnhighlightSkillLabel" & $slot, 200)
+EndFunc
+
+Func _UnhighlightSkillLabel1()
+    GUICtrlSetBkColor($SkillLabels[0], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel1")
+EndFunc
+Func _UnhighlightSkillLabel2()
+    GUICtrlSetBkColor($SkillLabels[1], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel2")
+EndFunc
+Func _UnhighlightSkillLabel3()
+    GUICtrlSetBkColor($SkillLabels[2], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel3")
+EndFunc
+Func _UnhighlightSkillLabel4()
+    GUICtrlSetBkColor($SkillLabels[3], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel4")
+EndFunc
+Func _UnhighlightSkillLabel5()
+    GUICtrlSetBkColor($SkillLabels[4], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel5")
+EndFunc
+Func _UnhighlightSkillLabel6()
+    GUICtrlSetBkColor($SkillLabels[5], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel6")
+EndFunc
+Func _UnhighlightSkillLabel7()
+    GUICtrlSetBkColor($SkillLabels[6], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel7")
+EndFunc
+Func _UnhighlightSkillLabel8()
+    GUICtrlSetBkColor($SkillLabels[7], 0xCCCCCC)
+    AdlibUnRegister("_UnhighlightSkillLabel8")
+EndFunc
+
+
+Func Out($TEXT)
+    Local $TIME = "[" & @HOUR & ":" & @MIN & ":" & @SEC & "] - "
+    Local $TEXTLEN = StringLen($TEXT)
+    Local $CONSOLELEN = _GUICtrlEdit_GetTextLen($GUIActionsEditExtended)
+    If $TEXTLEN + $CONSOLELEN > 30000 Then GUICtrlSetData($GUIActionsEditExtended, StringRight(_GUICtrlEdit_GetText($GUIActionsEditExtended), 30000 - $TEXTLEN - 1000))
+    _GUICtrlEdit_AppendText($GUIActionsEditExtended, @CRLF & $TIME & $TEXT)
+    _GUICtrlEdit_Scroll($GUIActionsEditExtended, 1)
+EndFunc
+
+; Log to Extra tab
+Func OutExtra($TEXT)
+    Local $TIME = "[" & @HOUR & ":" & @MIN & ":" & @SEC & "] - "
+    Local $TEXTLEN = StringLen($TEXT)
+    Local $CONSOLELEN = _GUICtrlEdit_GetTextLen($GUIExtraEdit)
+    If $TEXTLEN + $CONSOLELEN > 30000 Then GUICtrlSetData($GUIExtraEdit, StringRight(_GUICtrlEdit_GetText($GUIExtraEdit), 30000 - $TEXTLEN - 1000))
+    _GUICtrlEdit_AppendText($GUIExtraEdit, @CRLF & $TIME & $TEXT)
+    _GUICtrlEdit_Scroll($GUIExtraEdit, 1)
+    UpdateExtraStatisticsDisplay()
+EndFunc
+
+Func UpdateExtraStatisticsDisplay()
+    ; Always update coordinates, even if bot is not initialized
+    Local $currentX = 0
+    Local $currentY = 0
+    
+    If $BotInitialized Then
+        $currentX = Round(X(-2))
+        $currentY = Round(Y(-2))
+    EndIf
+    
+    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & $currentX & ", " & $currentY & ")")
+    
+    ; Only update other stats if bot is initialized
+    If $BotInitialized Then
+        GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
+        GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+        GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+        GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+        GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+        GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+        GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
+        GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+        GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+        GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+        GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+        GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+    EndIf
+EndFunc
+
