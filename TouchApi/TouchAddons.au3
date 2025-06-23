@@ -2492,6 +2492,8 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPIRIT, $aRandom 
                     EndIf
                 Next
             WEnd
+            ; After fighting, pick up loot before resuming movement
+            PickUpLoot()
             ; After fighting, resume movement to original destination
             Move($l_iDestX, $l_iDestY, 0)
         EndIf
