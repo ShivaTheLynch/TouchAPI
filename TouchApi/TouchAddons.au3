@@ -2478,7 +2478,18 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRand
             Local $l_aEnemiesInRange = GetAgentPtrArray(3, 0xDB, 3, 1200)
             If $l_aEnemiesInRange[0] > 0 Then
                 ; If enemies are detected, engage in combat
-                Fight($l_aEnemiesInRange, $a_aAllies)
+                For $i = 1 To $l_aEnemiesInRange[0]
+                    Local $target = $l_aEnemiesInRange[$i]
+                    If Not GetIsDead($target) Then
+                        ChangeTarget($target)
+                        Attack($target, True)
+                        UseSkillsWithPriorityAndCustomOrder($target)
+                        ; Wait until target is dead or out of range before moving to next
+                        While Not GetIsDead($target) And GetDistance($target, -2) < $aRange
+                            Sleep(100)
+                        WEnd
+                    EndIf
+                Next
                 ; After fighting, resume movement to original destination
                 Move($l_iDestX, $l_iDestY, 0)
             EndIf
