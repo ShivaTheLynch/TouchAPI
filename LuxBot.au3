@@ -601,56 +601,5 @@ Func VanquishMountQinkai()
 	Return 0
 EndFunc
 
-Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRandom = 50, $a_aAllies = 0)
-    If GetMapLoading() Then Return
-    Local $l_iBlocked = 0
-    Local $l_bMapLoading = GetMapLoading(), $l_bMapLoadingOld
-    Local $l_iDestX = $aX + Random(-$aRandom, $aRandom)
-    Local $l_iDestY = $aY + Random(-$aRandom, $aRandom)
-    Local $l_iCheckInterval = 5 ; Interval in loop iterations to check for enemies
-    Local $l_iIterationCount = 0
 
-    If $aDescription <> "" Then
-        Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
-    Else
-        Out("Moving to kill enemies at (" & $aX & ", " & $aY & ")")
-    EndIf
-
-    Move($l_iDestX, $l_iDestY, 0)
-    Do
-        If DetectSkipCinematics() Then ExitLoop
-        $l_bMapLoadingOld = $l_bMapLoading
-        $l_bMapLoading = GetMapLoading()
-        If $l_bMapLoading <> $l_bMapLoadingOld Then ExitLoop
-        ConditionalSkipCinematic()
-
-        ; Enemy detection logic
-        If Mod($l_iIterationCount, $l_iCheckInterval) == 0 Then
-            Local $l_aEnemiesInRange = GetAgentPtrArray(3, 0xDB, 3, 1200)
-            If $l_aEnemiesInRange[0] > 0 Then
-                ; If enemies are detected, engage in combat
-                Fight($l_aEnemiesInRange, $a_aAllies)
-                ; After fighting, resume movement to original destination
-                Move($l_iDestX, $l_iDestY, 0)
-            EndIf
-        EndIf
-
-        If MoveX(-2) == 0 And MoveY(-2) == 0 Then
-            $l_iBlocked += 1
-            $l_iDestX = $aX + Random(-$aRandom, $aRandom)
-            $l_iDestY = $aY + Random(-$aRandom, $aRandom)
-            Move($l_iDestX, $l_iDestY, 0)
-        EndIf
-        UpdateExtraStatisticsDisplay()
-        Sleep(100)
-        $l_iIterationCount += 1
-    Until GetDistanceToXY($l_iDestX, $l_iDestY) < 25 Or $l_iBlocked > 14
-    Out("Reached destination at (" & $aX & ", " & $aY & ")")
-    Out("🎮 " & GetRandomGameJoke())
-    $Stat_LuxonFaction = GetLuxonFaction()
-    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
-    $Stat_CurrentGold = GetGoldCharacter()
-    UpdateStatisticsDisplay()
-    Return True
-EndFunc
 
