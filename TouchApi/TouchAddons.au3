@@ -2456,9 +2456,10 @@ Func GetRandomGameJoke()
     Local $randomIndex = Random(0, UBound($jokes) - 1, 1)
     Return $jokes[$randomIndex]
 EndFunc
-Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPIRIT, $aRandom = 50, $a_aAllies = 0)
+;~ Description: Move to coordinates and kill all enemies in range
+;~ Parameters: $aX, $aY = Target coordinates, $aDescription = Description for logging, $aRange = Attack range (default: $RANGE_SPELLCAST)
+Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST, $aRandom = 50, $a_aAllies = 0)
     Local $l_iBlocked = 0
-    Local $l_bMapLoading = GetMapLoading(), $l_bMapLoadingOld
     Local $l_iDestX = $aX + Random(-$aRandom, $aRandom)
     Local $l_iDestY = $aY + Random(-$aRandom, $aRandom)
     Local $l_iCheckInterval = 5 ; Interval in loop iterations to check for enemies
@@ -2472,12 +2473,6 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPIRIT, $aRandom 
 
     Move($l_iDestX, $l_iDestY, 0)
     Do
-        If DetectSkipCinematics() Then ExitLoop
-        $l_bMapLoadingOld = $l_bMapLoading
-        $l_bMapLoading = GetMapLoading()
-        If $l_bMapLoading <> $l_bMapLoadingOld Then ExitLoop
-        ConditionalSkipCinematic()
-
         ; Enemy detection logic
         If Mod($l_iIterationCount, $l_iCheckInterval) == 0 Then
             Local $l_aEnemiesInRange = GetAgentPtrArray(3, 0xDB, 3, 1200)
@@ -2499,89 +2494,6 @@ Func MoveToKill($aX, $aY, $aDescription = "", $aRange = $RANGE_SPIRIT, $aRandom 
         Sleep(100)
         $l_iIterationCount += 1
     Until GetDistanceToXY($l_iDestX, $l_iDestY) < 25 Or $l_iBlocked > 14
-    Out("Reached destination at (" & $aX & ", " & $aY & ")")
-    Out("🎮 " & GetRandomGameJoke())
-    $Stat_LuxonFaction = GetLuxonFaction()
-    $Stat_LuxonFactionMax = GetMaxLuxonFaction()
-    $Stat_CurrentGold = GetGoldCharacter()
-    UpdateStatisticsDisplay()
-    Return True
-EndFunc
-;~ Description: Move to coordinates and kill all enemies in range
-;~ Parameters: $aX, $aY = Target coordinates, $aDescription = Description for logging, $aRange = Attack range (default: $RANGE_SPELLCAST)
-Func MoveToKillOLD($aX, $aY, $aDescription = "", $aRange = $RANGE_SPELLCAST)
-    Local $lMe = GetAgentPtr(-2)
-    Local $currentTargetID = 0
-    Local $lInCombat = False
-    Local $lDestinationReached = False
-    Local $combatCheckRange = $aRange
-    
-    If $aDescription <> "" Then
-        Out("Moving to kill: " & $aDescription & " at (" & $aX & ", " & $aY & ")")
-    Else
-        Out("Moving to kill enemies at (" & $aX & ", " & $aY & ")")
-    EndIf
-
-    While Not $lDestinationReached
-        If GetIsDead($lMe) Then
-            Out("Player is dead, stopping combat")
-            OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $aX & ", " & $aY & ")")
-            Return False
-        EndIf
-        
-        ; Check for enemies in range
-        Local $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $combatCheckRange)
-        If $lEnemyCount > 0 Then
-            If Not $lInCombat Then
-                Out("Found " & $lEnemyCount & " enemies, engaging combat!")
-                $lInCombat = True
-            EndIf
-            ; Combat loop
-            Do
-                If GetIsDead($lMe) Then
-                    Out("Player is dead during combat")
-                    OutExtra("Character died at (" & X(-2) & ", " & Y(-2) & ") while moving to (" & $aX & ", " & $aY & ")")
-                    Return False
-                EndIf
-                $lEnemyCount = GetNumberOfEnemiesNearAgent(-2, $combatCheckRange)
-                If $lEnemyCount = 0 Then
-                    Out("Combat complete, resuming movement to target")
-                    $lInCombat = False
-                    ExitLoop
-                EndIf
-                Local $lTarget = GetNearestEnemyPtrToAgent(-2)
-                If $lTarget <> 0 And Not GetIsDead($lTarget) Then
-                    Local $targetID = ID($lTarget)
-                    If $targetID <> $currentTargetID Then
-                        ChangeTarget($lTarget)
-                        Attack($lTarget, True)
-                        $currentTargetID = $targetID
-                        Out("Switched to new target: " & GetPlayerName($lTarget))
-                    EndIf
-                    If GetDistance($lTarget, -2) <= $RANGE_SPELLCAST Then
-                        UseSkillsWithPriorityAndCustomOrder($lTarget)
-                    EndIf
-                EndIf
-                UpdateExtraStatisticsDisplay()
-                Sleep(10)
-            Until False
-            PickUpLoot()
-            Out("Checking for dead party members after combat...")
-            CheckAndResurrectPartyMembers()
-        Else
-            ; Move directly to destination
-            Local $curX = X(-2)
-            Local $curY = Y(-2)
-            Local $dist = GetDistanceToXY($aX, $aY, -2)
-            If $dist < 100 Then
-                $lDestinationReached = True
-                ExitLoop
-            EndIf
-            MoveTo($aX, $aY, 50)
-            UpdateExtraStatisticsDisplay()
-            Sleep(10)
-        EndIf
-    WEnd
     Out("Reached destination at (" & $aX & ", " & $aY & ")")
     Out("🎮 " & GetRandomGameJoke())
     $Stat_LuxonFaction = GetLuxonFaction()
