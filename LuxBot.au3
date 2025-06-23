@@ -307,7 +307,7 @@ Func VanquishMountQinkai()
 		[18000, 3000, 'Oni 3'], _
 		[16500, 1000, 'Leftovers'], _
 		[13500, -1500, 'Naga 7'], _
-        [12975, -493, 'Naga 7 Extra'], _
+        [12133, 1307, 'Naga 7 Extra'], _
 		[12500, -3500, 'Naga 8'], _
         [12442, -7820, 'Naga 8 Extra'], _
 		[14000, -6000, 'Outcast Warrior Boss'], _

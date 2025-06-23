@@ -96,12 +96,18 @@ Func CountSlots()
 EndFunc ; Counts open slots in your Inventory
 
 Func PickUpLoot()
-	If GetIsDead(-2) Then Return
+    If GetIsDead(-2) Then Return
+    ; If inventory is nearly full, trigger inventory management and skip loot pickup
+    If CountSlots() < 2 Then
+        Inventory()
+        Return
+    EndIf
     Local $lAgentArray = GetItemArray()
+    If Not IsArray($lAgentArray) Then Return ; <-- Add this line
     Local $maxitems = $lAgentArray[0]
 
     For $i = 1 To $maxitems
-		If GetIsDead(-2) Then Exitloop
+        If GetIsDead(-2) Then Exitloop
         Local $aItemPtr = $lAgentArray[$i]
         Local $aItemAgentID = GetItemInfoByPtr($aItemPtr, "AgentID")
 
@@ -109,32 +115,32 @@ Func PickUpLoot()
         If $aItemAgentID = 0 Then ContinueLoop ; If Item is not on the ground
 
         If CanPickUp($aItemPtr) Then
-			; --- Gold pickup logic ---
-			Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
-			If $lModelID = 2511 Then ; Gold coin model ID
-				Local $goldBefore = GetGoldCharacter()
-				PickUpItem($aItemAgentID)
-				Local $lDeadlock = TimerInit()
-				While GetItemAgentExists($aItemAgentID)
-					Sleep(100)
-					If GetIsDead(-2) Then Exitloop
-					If TimerDiff($lDeadlock) > 10000 Then ExitLoop
-				WEnd
-				Local $goldAfter = GetGoldCharacter()
-				Local $goldDiff = $goldAfter - $goldBefore
-				If $goldDiff > 0 And IsDeclared("$Stat_GoldPickedUp") Then
-					$Stat_GoldPickedUp += $goldDiff
-					If IsDeclared("UpdateStatisticsDisplay") Then UpdateStatisticsDisplay()
-				EndIf
-			Else
-				PickUpItem($aItemAgentID)
-				Local $lDeadlock = TimerInit()
-				While GetItemAgentExists($aItemAgentID)
-					Sleep(100)
-					If GetIsDead(-2) Then Exitloop
-					If TimerDiff($lDeadlock) > 10000 Then ExitLoop
-				WEnd
-			EndIf
+            ; --- Gold pickup logic ---
+            Local $lModelID = GetItemInfoByPtr($aItemPtr, "ModelID")
+            If $lModelID = 2511 Then ; Gold coin model ID
+                Local $goldBefore = GetGoldCharacter()
+                PickUpItem($aItemAgentID)
+                Local $lDeadlock = TimerInit()
+                While GetItemAgentExists($aItemAgentID)
+                    Sleep(100)
+                    If GetIsDead(-2) Then Exitloop
+                    If TimerDiff($lDeadlock) > 10000 Then ExitLoop
+                WEnd
+                Local $goldAfter = GetGoldCharacter()
+                Local $goldDiff = $goldAfter - $goldBefore
+                If $goldDiff > 0 And IsDeclared("$Stat_GoldPickedUp") Then
+                    $Stat_GoldPickedUp += $goldDiff
+                    If IsDeclared("UpdateStatisticsDisplay") Then UpdateStatisticsDisplay()
+                EndIf
+            Else
+                PickUpItem($aItemAgentID)
+                Local $lDeadlock = TimerInit()
+                While GetItemAgentExists($aItemAgentID)
+                    Sleep(100)
+                    If GetIsDead(-2) Then Exitloop
+                    If TimerDiff($lDeadlock) > 10000 Then ExitLoop
+                WEnd
+            EndIf
         EndIf
     Next
 EndFunc   ;==>PickUpLoot
