@@ -2880,6 +2880,7 @@ Func UpdateExtraStatisticsDisplay()
         GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
         GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
         GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+        GUICtrlSetData($ExtraStatKurzickFactionLabel, "Kurzick Faction: " & GetKurzickFaction() & " / " & GetMaxKurzickFaction())
     EndIf
 EndFunc
 
