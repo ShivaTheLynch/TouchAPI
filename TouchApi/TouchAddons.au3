@@ -2687,7 +2687,13 @@ Func CheckAndResurrectPartyMembers()
 			$memberAgentID = GetMyPartyHeroInfo($i - 1, "AgentID")
 		EndIf
 		
-		; Check if this member is dead
+		; Add safety check for valid agent ID
+		If $memberAgentID = 0 Then ContinueLoop
+		
+		; Check if this member is dead - add safety check
+		Local $agentPtr = GetAgentPtr($memberAgentID)
+		If $agentPtr = 0 Then ContinueLoop ; Skip if agent pointer is invalid
+		
 		If $memberAgentID <> 0 And GetIsDead($memberAgentID) Then
 			$deadMembers += 1
 			ReDim $deadPartyMembers[$deadMembers + 1]
@@ -2718,6 +2724,13 @@ Func CheckAndResurrectPartyMembers()
 			; Check if all members are now alive
 			$allResurrected = True
 			For $i = 1 To $deadMembers
+				; Add safety check before calling GetIsDead
+				Local $agentPtr = GetAgentPtr($deadPartyMembers[$i])
+				If $agentPtr = 0 Then
+					; Agent pointer is invalid, assume resurrected
+					ContinueLoop
+				EndIf
+				
 				If GetIsDead($deadPartyMembers[$i]) Then
 					$allResurrected = False
 					ExitLoop
@@ -2744,6 +2757,10 @@ Func CheckAndResurrectPartyMembers()
 		; Final status report
 		Local $stillDead = 0
 		For $i = 1 To $deadMembers
+			; Add safety check before calling GetIsDead
+			Local $agentPtr = GetAgentPtr($deadPartyMembers[$i])
+			If $agentPtr = 0 Then ContinueLoop ; Skip if agent pointer is invalid
+			
 			If GetIsDead($deadPartyMembers[$i]) Then
 				$stillDead += 1
 			EndIf

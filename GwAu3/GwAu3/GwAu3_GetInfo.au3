@@ -2129,7 +2129,10 @@ Func GetAgentPtr($aAgentID = -2)
 	If IsPtr($aAgentID) Then Return $aAgentID
 	Local $lOffset[3] = [0, 4 * ConvertID($aAgentID), 0]
 	Local $lAgentStructAddress = MemoryReadPtr($mAgentBase, $lOffset)
-	Return $lAgentStructAddress[0]
+	Local $lAgentPtr = $lAgentStructAddress[0]
+	; Add safety check for invalid agent pointers during resurrection
+	If $lAgentPtr = 0 Or $lAgentPtr < 0x10000 Then Return 0
+	Return $lAgentPtr
 EndFunc   ;==>GetAgentPtr
 
 Func GetAgentInfo($aAgentID = -2, $aInfo = "")

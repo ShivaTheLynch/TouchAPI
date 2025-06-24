@@ -493,7 +493,9 @@ EndFunc   ;==>GetIsAttacking
 ;	=== Effects ====
 ;~ Description: Tests if an agent is dead.
 Func GetIsDead($aAgent = -2)
-	Return BitAND(MemoryRead(GetAgentPtr($aAgent) + 312, "long"), 0x0010) > 0
+	Local $lAgentPtr = GetAgentPtr($aAgent)
+	If $lAgentPtr = 0 Then Return False ; Return false if agent pointer is invalid
+	Return BitAND(MemoryRead($lAgentPtr + 312, "long"), 0x0010) > 0
 EndFunc   ;==>GetIsDead
 
 ;~ Description: Tests if an agent has a condition. Accepts ID, Struct or Ptr
