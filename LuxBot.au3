@@ -43,15 +43,6 @@ Func CheckMapAndStartVanquish()
     EndIf
 EndFunc
 ; Helper function to set Hard Mode before traveling
-Func SetHardModeForTravel()
-    If GUICtrlRead($GUIHardModeCheckbox) = $GUI_CHECKED Then
-        SwitchMode($DIFFICULTY_HARD)
-        Out("Hard Mode enabled for next travel.")
-    Else
-        SwitchMode($DIFFICULTY_NORMAL)
-        Out("Normal Mode enabled for next travel.")
-    EndIf
-EndFunc
 
 ; Example usage before every RndTravel or TravelTo call:
 ; SetHardModeForTravel()
@@ -102,18 +93,7 @@ EndFunc
 ; Before RndTravel($MAP_ID_EYE_OF_THE_NORTH ) and RndTravel($MAP_ID_FORT_ASPENWOOD_LUXON)
 ; Instruct user to add SetHardModeForTravel() before those calls in TouchAddons.au3 if needed.
 
-Func RndTravel($aMapID)
-	Local $UseDistricts = 7 ; 7=eu, 8=eu+int, 11=all(incl. asia)
-	; Region/Language order: eu-en, eu-fr, eu-ge, eu-it, eu-sp, eu-po, eu-ru, int, asia-ko, asia-ch, asia-ja
-	Local $Region[11]   = [2, 2, 2, 2, 2, 2, 2, -2, 1, 3, 4]
-	Local $Language[11] = [0, 2, 3, 4, 5, 9, 10, 0, 0, 0, 0]
-	Local $Random = Random(0, $UseDistricts - 1, 1)
- 	MoveMap($aMapID, $Region[$Random], 0, $Language[$Random])
-;~	MoveMap($aMapID, $Region[$Random], 0, $Language[4])
-;~ 	WaitMapLoading($aMapID, 30000)
-	WaitMapLoadingEx($aMapID, 0)
-	Sleep(3000)
-EndFunc   ;==>RndTravel
+
 
 
 
