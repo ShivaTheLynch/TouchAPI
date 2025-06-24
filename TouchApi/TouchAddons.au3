@@ -2907,3 +2907,15 @@ Func SetHardModeForTravel()
         Out("Normal Mode enabled for next travel.")
     EndIf
 EndFunc
+
+;~ Returns True if the group is alive
+Func IsGroupAlive()
+	Local $deadMembers = 0
+	For $i = 0 to GetHeroCount()
+		Local $heroID = GetHeroID($i)
+		If Not GetAgentExists($heroID) Or GetIsDead($heroID) Then
+			$deadMembers += 1
+		EndIf
+	Next
+	Return $deadMembers < 8
+EndFunc

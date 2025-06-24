@@ -283,12 +283,9 @@ Func GetCurrentTargetPtr()
 EndFunc   ;==>GetCurrentTargetPtr
 
 ;~ Description: Internal use for GetAgentByID()
-;~ Func GetAgentPtr($aAgent = GetMyID())
+;~ Func GetAgentPtr($aAgent = -2)
 ;~ 	If IsPtr($aAgent) Then Return $aAgent
 ;~ 	Return MemoryRead(MemoryRead($mAgentBase, 'ptr') + 4 * ID($aAgent), 'ptr')
-;~ 	; Local $lOffset[3] = [0, 4 * ID($aAgent), 0]
-;~ 	; Local $lAgentStructAddress = MemoryReadPtr($mAgentBase, $lOffset, 'ptr')
-;~ 	; Return $lAgentStructAddress[0]
 ;~ EndFunc   ;==>GetAgentPtr
 
 ;~ Description: Test if an agent exists.
