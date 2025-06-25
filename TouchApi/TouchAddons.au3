@@ -1,15 +1,49 @@
 #include-once
 #include "../constants/constants.au3"
 
-; Add missing rarity constant at the top of the file
-Global Const $rarity_gray = 2620
+
+
+
+
+
+
+
+;~ Create a map from an array to have a one liner map instanciation
+Func MapFromArray($keys)
+	Local $map[]
+	For $i = 0 To UBound($keys) - 1
+		$map[$keys[$i]] = 1
+	Next
+	Return $map
+EndFunc
+
+
+;~ Create a map from a double array to have a one liner map instanciation with values
+Func MapFromDoubleArray($keysAndValues)
+	Local $map[]
+	For $i = 0 To UBound($keysAndValues) - 1
+		$map[$keysAndValues[$i][0]] = $keysAndValues[$i][1]
+	Next
+	Return $map
+EndFunc
+
+
+;~ Create a map from two arrays to have a one liner map instanciation with values
+Func MapFromArrays($keys, $values)
+	Local $map[]
+	For $i = 0 To UBound($keys) - 1
+		Local $val = $values[$i]
+		$map[$keys[$i]] = $val
+	Next
+	Return $map
+EndFunc
+
+
 
 ;~ All Weapon mods
 Global $Weapon_Mod_Array[25] = [893, 894, 895, 896, 897, 905, 906, 907, 908, 909, 6323, 6331, 15540, 15541, 15542, 15543, 15544, 15551, 15552, 15553, 15554, 15555, 17059, 19122, 19123]
 
 ;~ General Items
-Global $General_Items_Array[6] = [2989, 2991, 2992, 5899, 5900, 22751]
-Global Const $ITEM_ID_Lockpicks = 22751
 
 ;~ Dyes
 Global Const $ITEM_ID_Dyes = 146
@@ -180,31 +214,31 @@ Func CanPickUp($aItemPtr)
     ; Rarity-based filtering
     If $GUIExists Then
         Switch $lRarity
-            Case $rarity_gold ; Gold items
+            Case $RARITY_Gold ; Gold items
                 If GUICtrlRead($GUIPickupGoldCheckbox) = $GUI_CHECKED Then
                     Return True
                 EndIf
-            Case $rarity_purple ; Purple items
+            Case $RARITY_Purple ; Purple items
                 If GUICtrlRead($GUIPickupPurpleCheckbox) = $GUI_CHECKED Then
                     Return True
                 EndIf
-            Case $rarity_blue ; Blue items
+            Case $RARITY_Blue ; Blue items
                 If GUICtrlRead($GUIPickupBlueCheckbox) = $GUI_CHECKED Then
                     Return True
                 EndIf
-            Case $rarity_green ; Green items
+            Case $RARITY_Green ; Green items
                 If GUICtrlRead($GUIPickupGreenCheckbox) = $GUI_CHECKED Then
                     Return True
                 EndIf
-            Case $rarity_white ; White items
+            Case $RARITY_White ; White items
                 If GUICtrlRead($GUIPickupWhiteCheckbox) = $GUI_CHECKED Then
                     Return True
                 EndIf
         EndSwitch
     Else
-        If ($lRarity == $rarity_gold) Then
+        If ($lRarity == $RARITY_Gold) Then
             Return True
-        ElseIf ($lRarity == $rarity_purple) Then
+        ElseIf ($lRarity == $RARITY_Purple) Then
             Return False
         EndIf
     EndIf
@@ -617,11 +651,11 @@ EndFunc ;==>Ident
 Func CanSalvageByGui($aItemPtr)
     Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
     ; Only use rarity checkboxes
-    If $lRarity = $rarity_gold And GUICtrlRead($GUISalvageGoldCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_purple And GUICtrlRead($GUISalvagePurpleCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_blue And GUICtrlRead($GUISalvageBlueCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_green And GUICtrlRead($GUISalvageGreenCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_white And GUICtrlRead($GUISalvageWhiteCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Gold And GUICtrlRead($GUISalvageGoldCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Purple And GUICtrlRead($GUISalvagePurpleCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Blue And GUICtrlRead($GUISalvageBlueCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Green And GUICtrlRead($GUISalvageGreenCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_White And GUICtrlRead($GUISalvageWhiteCheckbox) = $GUI_CHECKED Then Return True
     Return False
 EndFunc
 
@@ -629,11 +663,11 @@ EndFunc
 Func CanSellByGui($aItemPtr)
     Local $lRarity = GetItemInfoByPtr($aItemPtr, "Rarity")
     ; Only use rarity checkboxes
-    If $lRarity = $rarity_gold And GUICtrlRead($GUISellGoldCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_purple And GUICtrlRead($GUISellPurpleCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_blue And GUICtrlRead($GUISellBlueCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_green And GUICtrlRead($GUISellGreenCheckbox) = $GUI_CHECKED Then Return True
-    If $lRarity = $rarity_white And GUICtrlRead($GUISellWhiteCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Gold And GUICtrlRead($GUISellGoldCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Purple And GUICtrlRead($GUISellPurpleCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Blue And GUICtrlRead($GUISellBlueCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_Green And GUICtrlRead($GUISellGreenCheckbox) = $GUI_CHECKED Then Return True
+    If $lRarity = $RARITY_White And GUICtrlRead($GUISellWhiteCheckbox) = $GUI_CHECKED Then Return True
     Return False
 EndFunc
 
@@ -2942,4 +2976,35 @@ Func UseMoraleConsumableIfNeeded()
 		UseItemByModelID(28431) ; Candy Apple
 		RndSleep(200)
 	EndIf
+EndFunc
+
+; Picks up the Bogroot's Boss Key if it is on the ground
+Func PickUpBogrootsBossKey()
+    Local $itemPtrs = GetItemsOnGround() ; Returns array of ground item pointers
+    For $i = 0 To UBound($itemPtrs) - 1
+        Local $modelID = GetItemInfoByPtr($itemPtrs[$i], "ModelID")
+        If $modelID = $ID_Bogroots_Boss_Key Then
+            Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
+            PickUpItem($agentID)
+            Out("Picked up Bogroot's Boss Key!")
+            Return True
+        EndIf
+    Next
+    Return False
+EndFunc
+
+; Picks up all keys on the ground (from $Keys_Array[])
+Func PickUpAllKeysOnGround()
+    Local $itemPtrs = GetItemsOnGround()
+    For $i = 0 To UBound($itemPtrs) - 1
+        Local $modelID = GetItemInfoByPtr($itemPtrs[$i], "ModelID")
+        For $j = 0 To UBound($Keys_Array) - 1
+            If $modelID = $Keys_Array[$j] Then
+                Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
+                PickUpItem($agentID)
+                Out("Picked up key with ModelID: " & $modelID)
+                ExitLoop
+            EndIf
+        Next
+    Next
 EndFunc

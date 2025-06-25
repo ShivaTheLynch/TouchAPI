@@ -22,10 +22,6 @@
 #include "_gwApi.au3"
 
 ; ==== Map IDs ====
-Global Const $ID_Gadds_Camp = 638
-Global Const $ID_Sparkfly_Swamp = 558
-Global Const $ID_Bogroot_lvl1 = 615
-Global Const $ID_Bogroot_lvl2 = 616
 Local Const $aggroRange = 1200
 ; ==== Constants ====
 Global Const $FroggyFarmerSkillbar = ''
@@ -315,7 +311,7 @@ Func FroggyFarmLoop()
 		MoveToKill(16841, -5619, 'Floor 2 - Zone 3 - Step 4', $aggroRange)
 
 		RndSleep(500)
-		PickUpItems()
+		PickUpAllKeysOnGround()
 
 		Out('Open dungeon door')
 		ClearTarget()
@@ -384,9 +380,8 @@ Func FroggyFarmLoop()
 	AdlibUnRegister('FroggyGroupIsAlive')
 	Out('Chest looted')
 	Out('Waiting for timer end + some more')
-	Sleep(190000)
-	While Not WaitMapLoading($ID_Sparkfly_Swamp)
-		Sleep(500)
+	While GetMapID() = $ID_Bogroot_lvl2
+		Sleep(1000)
 	WEnd
 	Out('Finished Run')
 
