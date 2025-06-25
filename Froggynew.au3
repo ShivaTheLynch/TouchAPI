@@ -26,7 +26,7 @@ Global Const $ID_Gadds_Camp = 638
 Global Const $ID_Sparkfly_Swamp = 558
 Global Const $ID_Bogroot_lvl1 = 615
 Global Const $ID_Bogroot_lvl2 = 616
-
+Local Const $aggroRange = 1200
 ; ==== Constants ====
 Global Const $FroggyFarmerSkillbar = ''
 Global Const $FroggyFarmInformations = 'For best results, dont cheap out on heroes' & @CRLF _
@@ -123,12 +123,12 @@ Func FroggyFarmLoop()
 
 	Out('Get quest reward')
 	MoveTo(12061, 22485)
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833907)
 	RndSleep(500)
 	; Quest validation doubled to secure bot
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833907)
 	RndSleep(500)
@@ -165,22 +165,22 @@ Func FroggyFarmLoop()
 
 	Out('Get quest')
 	MoveTo(12061, 22485)
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833901)
 	RndSleep(500)
 	; Quest pickup doubled to secure bot
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833901)
 	RndSleep(500)
 	Out('Talk to Tekk if already had quest')
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833905)
 	RndSleep(500)
 	; Quest pickup doubled to secure bot
-	GoToNPC(GetNearestNPCToCoords(12500, 22648))
+	GoToNPCNearXY(12500, 22648)
 	RndSleep(250)
 	Dialog(0x833905)
 	RndSleep(500)
@@ -217,7 +217,7 @@ Func FroggyFarmLoop()
 
 		Out('Getting blessing')
 		MoveTo(19063, 7875)
-		GoToNPC(GetNearestNPCToCoords(19058, 7952))
+		GoToNPCNearXY(19058, 7952)
 		RndSleep(250)
 		Dialog(0x84)
 		RndSleep(250)
@@ -265,7 +265,7 @@ Func FroggyFarmLoop()
 	While $FroggyDeathsCount < 6 And Not FroggyIsInRange (-719, 11140, 1250)
 		Out('Getting blessing')
 		MoveTo(-11072, -5522)
-		GoToNPC(GetNearestNPCToCoords(-11055, -5533))
+		GoToNPCNearXY(-11055, -5533)
 		RndSleep(250)
 		Dialog(0x84)
 		RndSleep(250)
