@@ -391,6 +391,9 @@ Func FroggyFarmLoop()
 	While GetMapID() = $ID_Bogroot_lvl2
 		Sleep(1000)
 	WEnd
+	While Not WaitMapLoading($ID_Sparkfly_Swamp)
+		Sleep(500)
+	WEnd
 	Out('Finished Run')
 
 	Return 0
