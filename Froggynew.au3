@@ -207,7 +207,7 @@ Func FroggyFarmLoop()
 	WEnd
 	Out('------------------------------------')
 	Out('First floor')
-	If IsHardmodeEnabled() Then UseConset()
+	UseConset()
 
 	While $FroggyDeathsCount < 6 And Not FroggyIsInRange (6078, 4483, 1250)
 		UseMoraleConsumableIfNeeded()
@@ -260,7 +260,7 @@ Func FroggyFarmLoop()
 
 	Out('------------------------------------')
 	Out('Second floor')
-	If IsHardmodeEnabled() Then UseConset()
+	UseConset()
 
 	While $FroggyDeathsCount < 6 And Not FroggyIsInRange (-719, 11140, 1250)
 		Out('Getting blessing')

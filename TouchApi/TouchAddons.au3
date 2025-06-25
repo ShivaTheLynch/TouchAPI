@@ -2919,3 +2919,27 @@ Func IsGroupAlive()
 	Next
 	Return $deadMembers < 8
 EndFunc
+
+; Use consumables if Hard Mode is enabled in GUI
+Func UseConset()
+	If GUICtrlRead($GUIHardModeCheckbox) = $GUI_CHECKED Then
+		Out("Hard Mode enabled - using consumables")
+		; Use various consumables from the pcons array
+		For $i = 0 To UBound($Array_pscon) - 1
+			UseItemByModelID($Array_pscon[$i])
+		Next
+		RndSleep(500)
+	Else
+		Out("Hard Mode disabled - skipping consumables")
+	EndIf
+EndFunc
+
+; Use morale consumables if needed (similar to UseConset but for morale boosters)
+Func UseMoraleConsumableIfNeeded()
+	If GUICtrlRead($GUIHardModeCheckbox) = $GUI_CHECKED Then
+		; Use specific morale consumables (candy corn, candy apple, etc.)
+		UseItemByModelID(28432) ; Candy Corn
+		UseItemByModelID(28431) ; Candy Apple
+		RndSleep(200)
+	EndIf
+EndFunc
