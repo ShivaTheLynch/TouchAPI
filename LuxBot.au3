@@ -179,6 +179,7 @@ Func MoveOut()
 	Move(-5493, 13712)
 	RndSleep(1000)
 	WaitMapLoading(200, 10000, 2000)
+	LuxonFarmSetup()
 	VanquishMountQinkai()
 EndFunc
 

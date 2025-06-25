@@ -361,7 +361,86 @@ Func FindIdentificationKit()
 	Next
 	Return $lKitPtr
 EndFunc   ;==>FindIdentificationKit
+Func InventoryFrog()
+	Out("Travel to Eye ")
+	;TravelGH()
+	;WaitMapLoading()
+	Out("Travelling to Eye of the North")
+	RndTravel($MAP_ID_EYE_OF_THE_NORTH )
 
+	$inventorytrigger = 1
+
+	;Out("Checking Guild Hall")
+	;CheckGuildHall()
+	sleep(1000)
+
+	Out("Move to Merchant")
+	;Merchant()
+	MerchantEotN()
+	sleep(2000)
+
+	Out("Identifying")
+	For $i = 1 To 4
+		Ident($i)
+	Next
+
+	Out("Selling")
+	For $i = 1 To 4
+		Sell($i)
+	Next
+
+	For $i = 1 To 4
+		Sell2($i)
+	Next
+
+	If GetGoldCharacter() > 90000 Then
+		Out("Depositing Gold")
+		DepositGold()
+	EndIf
+
+	If FindRareRuneOrInsignia() <> 0 Then
+		Out("Salvage all Runes")
+		For $i = 1 To 4
+			Salvage($i)
+		Next
+		Out("Second Round of Salvage")
+		For $i = 1 To 4
+			Salvage($i)
+		Next
+
+		Out("Sell leftover items")
+		For $i = 1 To 4
+			Sell($i)
+		Next
+
+		For $i = 1 To 4
+			Sell2($i)
+		Next
+	EndIf
+
+	While FindRareRuneOrInsignia() <> 0
+		Out("Move to Rune Trader")
+		;RuneTrader()
+		RuneTraderEotN()
+		Sleep(2000)
+
+		Out("Sell Runes")
+		For $i = 1 To 4
+			SellRunes($i)
+		Next
+		Sleep(2000)
+
+		If GetGoldCharacter() > 20000 Then
+			;MoveTo(907.45,11489.51)
+			Out("Buying Rare Materials")
+			;RareMaterialTrader(),
+			RareMaterialTraderEotN()
+		EndIf
+	WEnd
+
+	sleep(3000)
+	RndTravel($ID_Gadds_Camp)  ; Travel back to Gadds after inventory is complete
+EndFunc ;==> Inventory
 Func Inventory()
 	Out("Travel to Eye ")
 	;TravelGH()

@@ -71,6 +71,13 @@ EndFunc
 ;~ Froggy farm setup
 Func SetupFroggyFarm()
 	Out('Setting up farm')
+	Out("Checking Inventory")
+	If CountSlots() < 7 Then
+		Out("Not enough free slots, running inventory routine and returning to outpost.")
+		InventoryFrog()
+		SetupFroggyFarm()
+		Return
+	EndIf
 	; Need to be done here in case bot comes back from inventory management
 	If GetMapID() <> $ID_Gadds_Camp Then RndTravel($ID_Gadds_Camp)
 	$FroggyDeathsCount = 0
@@ -125,6 +132,13 @@ Func FroggyFarmLoop()
 	AdlibRegister('FroggyGroupIsAlive', 10000)
 
 	Local $aggroRange = $RANGE_SPELLCAST + 100
+	Out("Checking Inventory")
+	If CountSlots() < 7 Then
+		Out("Not enough free slots, running inventory routine and returning to outpost.")
+		InventoryFrog()
+		SetupFroggyFarm()
+		Return
+	EndIf
 
 	Out('Get quest reward')
 	MoveTo(12061, 22485)
