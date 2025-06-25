@@ -2958,7 +2958,11 @@ EndFunc
 Func UseConset()
 	If GUICtrlRead($GUIHardModeCheckbox) = $GUI_CHECKED Then
 		Out("Hard Mode enabled - using consumables")
-		; Use various consumables from the pcons array
+		; Use all consets
+		For $i = 0 To UBound($Consets_Array) - 1
+			UseItemByModelID($Consets_Array[$i])
+		Next
+		; Use all pcons
 		For $i = 0 To UBound($Array_pscon) - 1
 			UseItemByModelID($Array_pscon[$i])
 		Next

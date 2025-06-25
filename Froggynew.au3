@@ -73,9 +73,18 @@ Func SetupFroggyFarm()
 	Out('Setting up farm')
 	; Need to be done here in case bot comes back from inventory management
 	If GetMapID() <> $ID_Gadds_Camp Then RndTravel($ID_Gadds_Camp)
-
 	$FroggyDeathsCount = 0
 	Out('Making way to portal')
+		; Check GUI Hard Mode setting and switch mode before starting the run
+If GUICtrlRead($GUIHardModeCheckbox) = $GUI_CHECKED Then
+    Out('Hard Mode enabled in GUI - switching to Hard Mode')
+    SwitchMode(1)
+    RndSleep(1000)
+Else
+    Out('Hard Mode disabled in GUI - switching to Normal Mode')
+    SwitchMode(0)
+    RndSleep(1000)
+EndIf
 	MoveTo(-10018, -21892)
 	MoveTo(-9550, -20400)
 	Move(-9451, -19766)
@@ -364,18 +373,17 @@ Func FroggyFarmLoop()
 	MoveTo(15086, -19132)
 	Out('Opening chest')
 	RndSleep(5000)
-	TargetNearestItem()
 	ActionInteract()
 	RndSleep(2500)
-	PickUpItems()
+	PickUpLoot()
 	; Doubled to secure the looting
 	MoveTo(15590, -18853)
 	MoveTo(15027, -19102)
 	RndSleep(5000)
-	TargetNearestItem()
+	
 	ActionInteract()
 	RndSleep(2500)
-	PickUpItems()
+	PickUpLoot()
 
 	AdlibUnRegister('FroggyGroupIsAlive')
 	Out('Chest looted')
@@ -417,5 +425,7 @@ Func _Exit()
     Exit
 EndFunc
 
-
+Func ActionInteract()
+	Return PerformAction(0x80, 0x1E)
+EndFunc
 
