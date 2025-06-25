@@ -920,7 +920,7 @@ Func CanSell($aitem)
  
 	Switch $RareSkin
 	Case True
-	   Return True
+	   Return False
 	EndSwitch
 
 	Switch $IsTyriaAnniSkin
