@@ -1,9 +1,27 @@
 #Region ### START Koda GUI section ### Form=
-$MainGui = GUICreate($BotTitle, 800, 600, -1, -1, -1, BitOR($WS_EX_TOPMOST,$WS_EX_WINDOWEDGE))
+$MainGui = GUICreate($BotTitle, 1000, 700, -1, -1, -1, BitOR($WS_EX_TOPMOST,$WS_EX_WINDOWEDGE))
 GUISetBkColor(0xEAEAEA, $MainGui)
 
+; === Statistics group (always visible, right side) ===
+$GroupStats = GUICtrlCreateGroup("Statistics", 600, 40, 380, 260)
+$StatCoordsLabel = GUICtrlCreateLabel("Coords: (0, 0)", 620, 60, 340, 20)
+$StatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 620, 80, 150, 20)
+$StatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 620, 100, 150, 20)
+$StatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 620, 120, 150, 20)
+$StatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 620, 140, 150, 20)
+$StatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 820, 60, 150, 20)
+$StatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 820, 80, 150, 20)
+$StatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 820, 100, 150, 20)
+$StatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 820, 120, 150, 20)
+$StatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 620, 160, 200, 20)
+$StatKurzickFactionLabel = GUICtrlCreateLabel("Kurzick Faction: 0 / 0", 620, 180, 200, 20)
+$StatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 820, 140, 150, 20)
+$StatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: 0", 620, 200, 150, 20)
+$StatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: 0", 820, 160, 150, 20)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+
 ; Create tab control
-$TabControl = GUICtrlCreateTab(8, 8, 784, 584)
+$TabControl = GUICtrlCreateTab(8, 8, 984, 684)
 
 ; Tab 1: Character Selection
 GUICtrlCreateTabItem("Character")
@@ -25,137 +43,97 @@ GUICtrlSetState($GUIStartBotButton, $GUI_DISABLE) ; Disabled until initialized
 $gOnTopCheckbox = GUICtrlCreateCheckbox("On Top", 250, 103, 81, 24)
 GUICtrlSetState(-1, $GUI_CHECKED)
 
-; Statistics group (moved inside Character tab only)
-$GroupStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 160)
-$StatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 60, 150, 20)
-$StatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 80, 150, 20)
-$StatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 100, 150, 20)
-$StatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 120, 150, 20)
-$StatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
-$StatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
-$StatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
-$StatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
-$StatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: 0 / 0", 420, 140, 200, 20)
-$ExtraStatKurzickFactionLabel = GUICtrlCreateLabel("Kurzick Faction: 0 / 0", 420, 180, 200, 20)
-$StatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: 0", 600, 140, 150, 20)
-$StatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: 0", 420, 160, 150, 20)
-$StatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: 0", 600, 160, 150, 20)
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Tab 2: Skillbar and Combat
 GUICtrlCreateTabItem("Combat")
-$Group2 = GUICtrlCreateGroup("Skillbar & Combat Settings", 16, 40, 760, 520)
 
-; Skill slots section
-$SkillGroup = GUICtrlCreateGroup("Skill Slots", 32, 64, 720, 160)
-; Create labels for each skill slot
-Global $SkillLabels[8]
+; Skill slots section (increase height and move to top)
+$SkillGroup = GUICtrlCreateGroup("Skill Slots", 32, 40, 440, 250)
+; Create labels for each skill slot in 2 rows of 4
+Global $SkillIcons[8]
 Global $SkillCheckboxes[8]
 Global $SkillPriorityCheckboxes[8]
-For $i = 0 To 7
-    ; Skill icon (larger)
-    $SkillLabels[$i] = GUICtrlCreateLabel("Slot " & ($i + 1), 48 + ($i * 85), 108, 60, 60, $SS_CENTER)
-    GUICtrlSetBkColor($SkillLabels[$i], 0xCCCCCC)
-    GUICtrlSetColor($SkillLabels[$i], 0x000000)
-    
-    ; Use checkbox (larger, positioned above skill icon)
-    $SkillCheckboxes[$i] = GUICtrlCreateCheckbox("Use", 48 + ($i * 85), 88, 60, 20)
-    GUICtrlSetState($SkillCheckboxes[$i], $GUI_CHECKED) ; Default to checked
-    
-    ; Priority checkbox (larger, positioned below skill icon)
-    $SkillPriorityCheckboxes[$i] = GUICtrlCreateCheckbox("Priority", 48 + ($i * 85), 173, 60, 20)
-    GUICtrlSetFont($SkillPriorityCheckboxes[$i], 8, 400, 0, "Arial")
-    GUICtrlSetColor($SkillPriorityCheckboxes[$i], 0xFF0000) ; Red text for priority
-Next
-; Skill names below priority checkboxes
 Global $SkillNames[8]
 For $i = 0 To 7
-    $SkillNames[$i] = GUICtrlCreateLabel("", 48 + ($i * 85), 198, 60, 40, $SS_CENTER)
+    Local $row = Int($i / 4)
+    Local $col = Mod($i, 4)
+    Local $x = 48 + ($col * 100)
+    Local $y = 90 + ($row * 90)
+    $SkillCheckboxes[$i] = GUICtrlCreateCheckbox("Use", $x, $y - 20, 60, 20)
+    GUICtrlSetState($SkillCheckboxes[$i], $GUI_CHECKED)
+    $SkillIcons[$i] = GUICtrlCreatePic("Skill_Icons\\default.jpg", $x, $y, 60, 40)
+    $SkillPriorityCheckboxes[$i] = GUICtrlCreateCheckbox("Priority", $x, $y + 40, 60, 20)
+    GUICtrlSetFont($SkillPriorityCheckboxes[$i], 8, 400, 0, "Arial")
+    GUICtrlSetColor($SkillPriorityCheckboxes[$i], 0xFF0000)
+    $SkillNames[$i] = GUICtrlCreateLabel("", $x, $y + 60, 60, 20, $SS_CENTER)
     GUICtrlSetFont($SkillNames[$i], 7, 400, 0, "Arial")
     GUICtrlSetColor($SkillNames[$i], 0x000000)
 Next
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Skill controls section
-$SkillControlsGroup = GUICtrlCreateGroup("Skill Controls", 32, 240, 350, 120)
-$GUIUpdateSkillsButton = GUICtrlCreateButton("Update Skills", 48, 264, 80, 25)
+; Skill controls section (move up)
+$SkillControlsGroup = GUICtrlCreateGroup("Skill Controls", 32, 300, 440, 120)
+$GUIUpdateSkillsButton = GUICtrlCreateButton("Update Skills", 48, 324, 80, 25)
 GUICtrlSetOnEvent($GUIUpdateSkillsButton, "GuiButtonHandler")
-$GUIAutoUpdateCheckbox = GUICtrlCreateCheckbox("Auto Update", 140, 266, 80, 20)
+$GUIAutoUpdateCheckbox = GUICtrlCreateCheckbox("Auto Update", 140, 326, 80, 20)
 GUICtrlSetState(-1, $GUI_CHECKED)
-$GUIUseAllSkillsButton = GUICtrlCreateButton("Use All", 48, 294, 60, 20)
+$GUIUseAllSkillsButton = GUICtrlCreateButton("Use All", 48, 354, 60, 20)
 GUICtrlSetOnEvent($GUIUseAllSkillsButton, "GuiButtonHandler")
-$GUIUseNoneSkillsButton = GUICtrlCreateButton("Use None", 112, 294, 60, 20)
+$GUIUseNoneSkillsButton = GUICtrlCreateButton("Use None", 112, 354, 60, 20)
 GUICtrlSetOnEvent($GUIUseNoneSkillsButton, "GuiButtonHandler")
-$GUITestSkillsButton = GUICtrlCreateButton("Test Skills", 176, 294, 60, 20)
+$GUITestSkillsButton = GUICtrlCreateButton("Test Skills", 176, 354, 60, 20)
 GUICtrlSetOnEvent($GUITestSkillsButton, "GuiButtonHandler")
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Custom Fighting Order Section
-$CustomFightingGroup = GUICtrlCreateGroup("Custom Fighting Order", 400, 240, 350, 320)
-$GUICustomFightingCheckbox = GUICtrlCreateCheckbox("Enable Custom Fighting Order", 416, 264, 200, 20)
+; Custom Fighting Order Section (move up)
+$CustomFightingGroup = GUICtrlCreateGroup("Custom Fighting Order", 32, 430, 440, 200)
+$GUICustomFightingCheckbox = GUICtrlCreateCheckbox("Enable Custom Fighting Order", 48, 454, 200, 20)
 GUICtrlSetOnEvent($GUICustomFightingCheckbox, "GuiButtonHandler")
 
 ; Custom fighting order list (up to 20 skills)
-$GUICustomFightingList = GUICtrlCreateList("", 416, 288, 320, 180)
+$GUICustomFightingList = GUICtrlCreateList("", 48, 478, 320, 120)
 GUICtrlSetOnEvent($GUICustomFightingList, "GuiButtonHandler")
 
 ; Input field for skill slot number
-GUICtrlCreateLabel("Skill Slot (1-8):", 416, 476, 80, 20)
-$GUISkillSlotInput = GUICtrlCreateInput("1", 500, 474, 40, 20)
+GUICtrlCreateLabel("Skill Slot (1-8):", 48, 606, 80, 20)
+$GUISkillSlotInput = GUICtrlCreateInput("1", 140, 604, 40, 20)
 GUICtrlSetLimit($GUISkillSlotInput, 1) ; Limit to 1 character
 
 ; Buttons for custom fighting order
-$GUIAddToCustomButton = GUICtrlCreateButton("Add Skill", 416, 496, 60, 20)
+$GUIAddToCustomButton = GUICtrlCreateButton("Add Skill", 200, 604, 60, 20)
 GUICtrlSetOnEvent($GUIAddToCustomButton, "GuiButtonHandler")
-$GUIRemoveFromCustomButton = GUICtrlCreateButton("Remove", 480, 496, 60, 20)
+$GUIRemoveFromCustomButton = GUICtrlCreateButton("Remove", 270, 604, 60, 20)
 GUICtrlSetOnEvent($GUIRemoveFromCustomButton, "GuiButtonHandler")
-$GUIClearCustomButton = GUICtrlCreateButton("Clear All", 544, 496, 60, 20)
+$GUIClearCustomButton = GUICtrlCreateButton("Clear All", 340, 604, 60, 20)
 GUICtrlSetOnEvent($GUIClearCustomButton, "GuiButtonHandler")
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Tab 3: Actions Log
+; Tab 3: Actions Log (use same design as Extra)
 GUICtrlCreateTabItem("Log")
-$Group3 = GUICtrlCreateGroup("Actions Log", 16, 40, 760, 520)
-$GUIActionsEditExtended = GUICtrlCreateEdit("", 32, 64, 728, 480)
+$GroupLog = GUICtrlCreateGroup("Actions Log", 16, 40, 480, 620)
+$GUIActionsEditExtended = GUICtrlCreateEdit("", 32, 64, 448, 580)
 GUICtrlSetData(-1, "")
 GUICtrlSetColor(-1, 0x99B2FF)
 GUICtrlSetBkColor(-1, 0x23272A)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Tab 4: Extra Log
+; Tab 4: Extra Log (unchanged)
 GUICtrlCreateTabItem("Extra")
-$GroupExtraLog = GUICtrlCreateGroup("Extra Log", 16, 40, 360, 520)
-$GUIExtraEdit = GUICtrlCreateEdit("", 32, 64, 328, 480)
+$GroupExtraLog = GUICtrlCreateGroup("Extra Log", 16, 40, 480, 620)
+$GUIExtraEdit = GUICtrlCreateEdit("", 32, 64, 448, 580)
 GUICtrlSetData(-1, "")
 GUICtrlSetColor(-1, 0xFFB266)
 GUICtrlSetBkColor(-1, 0x23272A)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Extra statistics group (styled like Character tab)
-$GroupExtraStats = GUICtrlCreateGroup("Statistics", 400, 40, 360, 180)
-$ExtraStatCoordsLabel = GUICtrlCreateLabel("Coords: (0, 0)", 420, 60, 300, 20)
-$ExtraStatDeathsLabel = GUICtrlCreateLabel("Deaths: 0", 420, 80, 150, 20)
-$ExtraStatTotalRunsLabel = GUICtrlCreateLabel("Total Runs: 0", 420, 100, 150, 20)
-$ExtraStatTotalRunTimeLabel = GUICtrlCreateLabel("Total Run Time: 0s", 420, 120, 150, 20)
-$ExtraStatAvgRunTimeLabel = GUICtrlCreateLabel("Avg Run Time: 0s", 420, 140, 150, 20)
-$ExtraStatGoldsLabel = GUICtrlCreateLabel("Golds picked up: 0", 600, 60, 150, 20)
-$ExtraStatPurplesLabel = GUICtrlCreateLabel("Purples picked up: 0", 600, 80, 150, 20)
-$ExtraStatBluesLabel = GUICtrlCreateLabel("Blues picked up: 0", 600, 100, 150, 20)
-$ExtraStatWhitesLabel = GUICtrlCreateLabel("Whites picked up: 0", 600, 120, 150, 20)
-$ExtraStatLuxonFactionLabel = GUICtrlCreateLabel("Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax, 420, 160, 200, 20)
-$ExtraStatKurzickFactionLabel = GUICtrlCreateLabel("Kurzick Faction: 0 / 0", 420, 180, 200, 20)
-$ExtraStatLuxonDonatedLabel = GUICtrlCreateLabel("Luxon Donated: " & $Stat_LuxonDonated, 600, 140, 150, 20)
-$ExtraStatCurrentGoldLabel = GUICtrlCreateLabel("Current Gold: " & $Stat_CurrentGold, 420, 180, 150, 20)
-$ExtraStatGoldPickedUpLabel = GUICtrlCreateLabel("Gold Picked Up: " & $Stat_GoldPickedUp, 600, 160, 150, 20)
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Tab 5: Run Options & Loot
 GUICtrlCreateTabItem("Settings")
-$Group4 = GUICtrlCreateGroup("Run Options", 16, 40, 370, 140)
+$Group4 = GUICtrlCreateGroup("Run Options", 16, 40, 480, 140)
 
 ; Hard Mode toggle
 $GUIHardModeCheckbox = GUICtrlCreateCheckbox("Hard Mode (HM)", 32, 64, 150, 20)
@@ -182,7 +160,7 @@ GUICtrlSetOnEvent($GUIAutoDropCheckbox, "GuiButtonHandler")
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Loot Options Group (move down for more space)
-$Group5 = GUICtrlCreateGroup("Loot Filter Options", 16, 190, 370, 370)
+$Group5 = GUICtrlCreateGroup("Loot Filter Options", 16, 190, 480, 430)
 
 ; Rarity filters (move down)
 $LootRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 214, 160, 160)
@@ -287,7 +265,7 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 ; GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Quick selection buttons (move to right column)
-$QuickSelectionGroup = GUICtrlCreateGroup("Quick Selection", 400, 190, 350, 120)
+$QuickSelectionGroup = GUICtrlCreateGroup("Quick Selection", 400, 190, 480, 120)
 $GUIAllLootButton = GUICtrlCreateButton("Select All Loot", 416, 214, 100, 25)
 GUICtrlSetOnEvent($GUIAllLootButton, "GuiButtonHandler")
 
@@ -311,10 +289,10 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Tab 6: Sell
 GUICtrlCreateTabItem("Sell")
-$GroupSell = GUICtrlCreateGroup("Sell Items", 16, 40, 760, 520)
+$GroupSell = GUICtrlCreateGroup("Sell Items", 16, 40, 480, 620)
 
 ; Sell Item Rarity
-$SellRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 350, 120)
+$SellRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 450, 120)
 $GUISellGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 48, 88, 150, 20)
 $GUISellPurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 112, 150, 20)
 $GUISellBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 136, 150, 20)
@@ -341,7 +319,7 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 ; GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Sell Special Items
-$SellSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 320, 180)
+$SellSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 480, 180)
 $GUISellMaterialsCheckbox = GUICtrlCreateCheckbox("Materials (Wood, Cloth, etc.)", 416, 88, 200, 20)
 $GUISellDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 416, 112, 150, 20)
 $GUISellKeysCheckbox = GUICtrlCreateCheckbox("Keys", 416, 136, 150, 20)
@@ -351,12 +329,12 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 GUICtrlCreateGroup("", -99, -99, 1, 1)
 
-; Tab 6: Salvage
+; Tab 7: Salvage
 GUICtrlCreateTabItem("Salvage")
-$GroupSalvage = GUICtrlCreateGroup("Salvage Items", 16, 40, 760, 520)
+$GroupSalvage = GUICtrlCreateGroup("Salvage Items", 16, 40, 480, 620)
 
 ; Salvage Item Rarity
-$SalvageRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 350, 120)
+$SalvageRarityGroup = GUICtrlCreateGroup("Item Rarity", 32, 64, 450, 120)
 $GUISalvageGoldCheckbox = GUICtrlCreateCheckbox("Gold Items (Legendary)", 48, 88, 150, 20)
 $GUISalvagePurpleCheckbox = GUICtrlCreateCheckbox("Purple Items (Unique)", 48, 112, 150, 20)
 $GUISalvageBlueCheckbox = GUICtrlCreateCheckbox("Blue Items (Rare)", 48, 136, 150, 20)
@@ -383,7 +361,7 @@ GUICtrlCreateGroup("", -99, -99, 1, 1)
 ; GUICtrlCreateGroup("", -99, -99, 1, 1)
 
 ; Salvage Special Items
-$SalvageSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 320, 180)
+$SalvageSpecialItemsGroup = GUICtrlCreateGroup("Special Items", 400, 64, 480, 180)
 $GUISalvageMaterialsCheckbox = GUICtrlCreateCheckbox("Materials (Wood, Cloth, etc.)", 416, 88, 200, 20)
 $GUISalvageDyesCheckbox = GUICtrlCreateCheckbox("Dyes", 416, 112, 150, 20)
 $GUISalvageKeysCheckbox = GUICtrlCreateCheckbox("Keys", 416, 136, 150, 20)

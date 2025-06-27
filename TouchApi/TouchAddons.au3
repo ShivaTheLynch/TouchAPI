@@ -2660,26 +2660,39 @@ EndFunc
 
 Func UpdateSkillbarDisplay()
     If Not $BotInitialized Then
-        Out("Bot not initialized, showing placeholder skill names")
-        ; Show placeholder names when bot is not initialized
+        Out("Bot not initialized, showing placeholder skill icons")
         For $i = 0 To 7
-            GUICtrlSetData($SkillNames[$i], "Slot " & ($i + 1))
+            GUICtrlSetImage($SkillIcons[$i], "Skill_Icons\\default.jpg")
+            GUICtrlSetData($SkillNames[$i], "")
         Next
         Return
     EndIf
-    
-    Out("Updating skillbar display...")
+    Out("Updating skillbar display with icons...")
     For $i = 0 To 7
         Local $skillID = GetSkillbarSkillID($i + 1)
         Local $skillName = GetSkillNameFromArray($skillID)
-        
-        ; Show skill name from array
+        Local $searchPattern = "Skill_Icons\\[" & $skillID & "] - *.jpg"
+        Out("Slot " & ($i+1) & ": skillID=" & $skillID & ", searchPattern='" & $searchPattern & "'")
+        Local $search = FileFindFirstFile($searchPattern)
+        Local $iconPath = "Skill_Icons\\default.jpg"
+        If $search <> -1 Then
+            Local $file = FileFindNextFile($search)
+            If Not @error And $file <> "" Then
+                $iconPath = "Skill_Icons\\" & $file
+            EndIf
+            FileClose($search)
+        EndIf
+        Out("Slot " & ($i+1) & ": iconPath='" & $iconPath & "', skillName='" & $skillName & "'")
+        Out("Slot " & ($i+1) & ": FileExists='" & FileExists($iconPath) & "'")
+        GUICtrlSetImage($SkillIcons[$i], $iconPath)
+        Out("Slot " & ($i+1) & ": GUICtrlSetImage @error=" & @error & ", @extended=" & @extended)
+        ; Try setting the image again in case of GUI bug
+        GUICtrlSetImage($SkillIcons[$i], $iconPath)
+        Out("Slot " & ($i+1) & ": GUICtrlSetImage (2nd try) @error=" & @error & ", @extended=" & @extended)
         GUICtrlSetData($SkillNames[$i], $skillName)
-        
-        ; Debug output to help identify issues
-        Out("Skill " & ($i + 1) & ": ID=" & $skillID & ", Name='" & $skillName & "'")
     Next
-    Out("Skillbar updated successfully")
+    GUISetState(@SW_SHOW) ; Force GUI redraw
+    Out("Skillbar updated with icons")
 EndFunc
 
 ; Function to initialize skill names when GUI is first created
@@ -2909,40 +2922,40 @@ EndFunc
 
 ; Helper to highlight a skill label when used
 Func HighlightSkillLabel($slot)
-    GUICtrlSetBkColor($SkillLabels[$slot-1], 0xFFFF00) ; Yellow
+    GUICtrlSetBkColor($SkillIcons[$slot-1], 0xFFFF00) ; Yellow border
     AdlibRegister("_UnhighlightSkillLabel" & $slot, 200)
 EndFunc
 
 Func _UnhighlightSkillLabel1()
-    GUICtrlSetBkColor($SkillLabels[0], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[0], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel1")
 EndFunc
 Func _UnhighlightSkillLabel2()
-    GUICtrlSetBkColor($SkillLabels[1], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[1], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel2")
 EndFunc
 Func _UnhighlightSkillLabel3()
-    GUICtrlSetBkColor($SkillLabels[2], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[2], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel3")
 EndFunc
 Func _UnhighlightSkillLabel4()
-    GUICtrlSetBkColor($SkillLabels[3], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[3], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel4")
 EndFunc
 Func _UnhighlightSkillLabel5()
-    GUICtrlSetBkColor($SkillLabels[4], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[4], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel5")
 EndFunc
 Func _UnhighlightSkillLabel6()
-    GUICtrlSetBkColor($SkillLabels[5], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[5], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel6")
 EndFunc
 Func _UnhighlightSkillLabel7()
-    GUICtrlSetBkColor($SkillLabels[6], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[6], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel7")
 EndFunc
 Func _UnhighlightSkillLabel8()
-    GUICtrlSetBkColor($SkillLabels[7], 0xCCCCCC)
+    GUICtrlSetBkColor($SkillIcons[7], 0xCCCCCC)
     AdlibUnRegister("_UnhighlightSkillLabel8")
 EndFunc
 
@@ -2977,24 +2990,20 @@ Func UpdateExtraStatisticsDisplay()
         $currentY = Round(Y(-2))
     EndIf
     
-    GUICtrlSetData($ExtraStatCoordsLabel, "Coords: (" & $currentX & ", " & $currentY & ")")
-    
-    ; Only update other stats if bot is initialized
-    If $BotInitialized Then
-        GUICtrlSetData($ExtraStatDeathsLabel, "Deaths: " & $Stat_Deaths)
-        GUICtrlSetData($ExtraStatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
-        GUICtrlSetData($ExtraStatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
-        GUICtrlSetData($ExtraStatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
-        GUICtrlSetData($ExtraStatGoldsLabel, "Golds picked up: " & $Stat_Golds)
-        GUICtrlSetData($ExtraStatPurplesLabel, "Purples picked up: " & $Stat_Purples)
-        GUICtrlSetData($ExtraStatBluesLabel, "Blues picked up: " & $Stat_Blues)
-        GUICtrlSetData($ExtraStatWhitesLabel, "Whites picked up: " & $Stat_Whites)
-        GUICtrlSetData($ExtraStatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
-        GUICtrlSetData($ExtraStatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
-        GUICtrlSetData($ExtraStatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
-        GUICtrlSetData($ExtraStatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
-        GUICtrlSetData($ExtraStatKurzickFactionLabel, "Kurzick Faction: " & GetKurzickFaction() & " / " & GetMaxKurzickFaction())
-    EndIf
+    GUICtrlSetData($StatCoordsLabel, "Coords: (" & $currentX & ", " & $currentY & ")")
+    GUICtrlSetData($StatDeathsLabel, "Deaths: " & $Stat_Deaths)
+    GUICtrlSetData($StatTotalRunsLabel, "Total Runs: " & $Stat_TotalRuns)
+    GUICtrlSetData($StatTotalRunTimeLabel, "Total Run Time: " & $Stat_TotalRunTime & "s")
+    GUICtrlSetData($StatAvgRunTimeLabel, "Avg Run Time: " & $Stat_AvgRunTime & "s")
+    GUICtrlSetData($StatGoldsLabel, "Golds picked up: " & $Stat_Golds)
+    GUICtrlSetData($StatPurplesLabel, "Purples picked up: " & $Stat_Purples)
+    GUICtrlSetData($StatBluesLabel, "Blues picked up: " & $Stat_Blues)
+    GUICtrlSetData($StatWhitesLabel, "Whites picked up: " & $Stat_Whites)
+    GUICtrlSetData($StatLuxonFactionLabel, "Luxon Faction: " & $Stat_LuxonFaction & " / " & $Stat_LuxonFactionMax)
+    GUICtrlSetData($StatLuxonDonatedLabel, "Luxon Donated: " & $Stat_LuxonDonated)
+    GUICtrlSetData($StatCurrentGoldLabel, "Current Gold: " & $Stat_CurrentGold)
+    GUICtrlSetData($StatGoldPickedUpLabel, "Gold Picked Up: " & $Stat_GoldPickedUp)
+    GUICtrlSetData($StatKurzickFactionLabel, "Kurzick Faction: " & GetKurzickFaction() & " / " & GetMaxKurzickFaction())
 EndFunc
 
 Func RndTravel($aMapID)
@@ -3063,11 +3072,13 @@ EndFunc
 
 ; Picks up the Bogroot's Boss Key if it is on the ground
 Func PickUpBogrootsBossKey()
-    Local $itemPtrs = GetItemsOnGround() ; Returns array of ground item pointers
-    For $i = 0 To UBound($itemPtrs) - 1
+    Local $itemPtrs = GetItemArray()
+    If Not IsArray($itemPtrs) Then Return False
+    For $i = 1 To $itemPtrs[0]
         Local $modelID = GetItemInfoByPtr($itemPtrs[$i], "ModelID")
+        Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
+        If $agentID = 0 Then ContinueLoop
         If $modelID = $ID_Bogroots_Boss_Key Then
-            Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
             PickUpItem($agentID)
             Out("Picked up Bogroot's Boss Key!")
             Return True
@@ -3078,12 +3089,14 @@ EndFunc
 
 ; Picks up all keys on the ground (from $Keys_Array[])
 Func PickUpAllKeysOnGround()
-    Local $itemPtrs = GetItemsOnGround()
-    For $i = 0 To UBound($itemPtrs) - 1
+    Local $itemPtrs = GetItemArray()
+    If Not IsArray($itemPtrs) Then Return
+    For $i = 1 To $itemPtrs[0]
         Local $modelID = GetItemInfoByPtr($itemPtrs[$i], "ModelID")
+        Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
+        If $agentID = 0 Then ContinueLoop
         For $j = 0 To UBound($Keys_Array) - 1
             If $modelID = $Keys_Array[$j] Then
-                Local $agentID = GetItemInfoByPtr($itemPtrs[$i], "AgentID")
                 PickUpItem($agentID)
                 Out("Picked up key with ModelID: " & $modelID)
                 ExitLoop
