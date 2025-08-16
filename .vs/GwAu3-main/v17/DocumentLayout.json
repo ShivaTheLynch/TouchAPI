@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\touch\\OneDrive\\Bureaublad\\GwAu3-main\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\touch\\OneDrive\\Bureaublad\\GwAu3-main\\Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GwAu3 Multi-Launcher copy.au3",
+              "DocumentMoniker": "C:\\Users\\touch\\OneDrive\\Bureaublad\\GwAu3-main\\Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3",
+              "RelativeDocumentMoniker": "Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3",
+              "ToolTip": "C:\\Users\\touch\\OneDrive\\Bureaublad\\GwAu3-main\\Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3",
+              "RelativeToolTip": "Scripts\\Multi-Launcher\\GwAu3 Multi-Launcher copy.au3",
+              "ViewState": "AgIAAN0HAAAAAAAAAAAWwOwHAAAAAAAAAAAAAA==",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAYAAACpF6WWAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQbSURBVDhPtZVbT1RXFMf/a5/LMIe5XzjDTUGu4i0VMei0pk/YlzbBF\u002BOn8KlfoR\u002BAr2Fj0j6R2jSmbdSaKq1tEwW0KiAMMMMM45yZc9l79eEwA8XX9r8f9lonO7\u002Bs/Nfa\u002BwD/tZiZ2vH8jRuZmzdvzqaSyS\u002BZmY8cIwbCLwyAQK1mc3l/v/bN0tLSvYWFBf/IWQCA3g4GBwbM4tWrvfl8/lPFzAQiZmYQwh1EOMidRmO8Xq9HbNumWq323eLiYlAqlTqFaO1gdnY2ViwWx2Px\u002BBcEAgkCEUEIQQSCIAEhwlwGQUwI0ROPxxOTk5NvNjY26pVKxWs0GgAA0YYCAFHoBoUBHexh3l4AVGhbXzQa/cy27a9u3749MTc31ymwA2VmKKUABhQrllKy67rstly4bos91\u002BMgkAwAmqaxZhhsmGYsFotfzGSzZyzLyn8AbYOllPA9Dw2nReWagzdbVbwt1VDeb1Cz5cLzPAghEDFNikQietSy0pbVnTRMM/IBlJlJKUW\u002B76NUqWNlrczPXm7j1\u002BVNPFnewrOXJV5dL2N37z38QIKEYF03YBgGdE2HoMP6jkK1QErD9Tw8WSnRtw9X6esfX9APS2/x/dM3dPenFbr78wr9\u002BXoX\u002B40WKSkJCD0\u002BaEVHHahpmpO\u002B0j5\u002B/HwTf7za4Z1qk7u7DJ4es3H6RIbT8S4u15p8/7e3WF6rcGXfYd/3GQe2hUN8BHrr1i365Nq1kaYnp5dWt1Hac2AagobsBC6O25g93YfR/hTpusBOrYnVjSp2qg4pJQFmhOtQAgDm5\u002BfNmUszvU03GPp7swY/UCiku3lsIA0rYsBOWxiyEzyYj4MArO/UsVtzOAR\u002BKAEA7969i5f3qnFfIeIFEtGIRpMnsjRUSNG9J6/x6PkmWV0GXZ7sJU0TaLgBud6hp8clACCXyzUSiZijCQS6JjAzXuBMoosbLY\u002BvTPXhwkgPD9lJHsjF\u002BcpUHwrpKJu66Bh5zNLwmmqaxtlM5kzO7j27VXFSQgDl/RZt7Nbx3vFpt9bEVsWhte06dmoOZRNRnLSTlEta0HWdHMdZfPjgwYvHj3\u002Bpov2g3LlzRw4ODr46fe6j38\u002Bfyp98urKF7T2H/UBBaOKgu2BdE4hbJqZOZJFLW0wiHJ7jreqMlO/7f3XpdL94th\u002BnelMUs0xSAAVSQSomqZiiEZ0unOrBxGCGepLdpOt6OKfHrO1AlVKuUqoRMQ0Uz/Xz57OjPDc9zJcmCrg8UeDrM8M8XxzlK1MFpBMWC\u002B2op/\u002BegUMos5JKSUGEfLIbo/0pOj\u002BcxaWxHkyP9eD8cJZGelPIJbuhaxqUYpJSIQgCSCnB6hDceaQ31te9R48ebmYymftKMSsloaQCAGIGE4VPo24YYd7\u002BERCoWq2ur62vtTrU/0P/AMiBAcKVohKWAAAAAElFTkSuQmCC",
+              "WhenOpened": "2025-08-15T03:15:36.635Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
