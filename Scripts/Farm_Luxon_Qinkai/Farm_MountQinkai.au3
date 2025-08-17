@@ -8,7 +8,7 @@
 #ce
 
 #RequireAdmin
-#include "C:/Users/touch/OneDrive/Bureaublad/GwAu3-main/API/_GwAu3.au3"
+#include "../../API/_GwAu3.au3"
 #include "GwAu3_AddOns.au3"
 
 Global Const $doLoadLoggedChars = True
