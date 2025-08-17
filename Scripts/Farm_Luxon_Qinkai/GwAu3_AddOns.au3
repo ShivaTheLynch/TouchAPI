@@ -97,6 +97,12 @@ Func MoveTo($aX, $aY, $aRandom = 50)
 	Local $lDestY = $aY + Random(-$aRandom, $aRandom)
 
 	if GetPartyDead() Then Return
+	
+	; Check for disconnection before movement
+	CloseGuildWars()
+	
+	; Check if character is stuck
+	CheckStuckCharacter()
 
 	Map_Move($lDestX, $lDestY, 0)
 
@@ -123,6 +129,13 @@ EndFunc   ;==>MoveTo
 Func AggroMoveToEx($x, $y, $s = "", $z = 1700)
 
 	If GetPartyDead() Then Return
+	
+	; Check for disconnection before movement
+	CloseGuildWars()
+	
+	; Check if character is stuck
+	CheckStuckCharacter()
+	
 	$TimerToKill = TimerInit()
 	Local $random = 50
 	Local $iBlocked = 0
@@ -3053,6 +3066,12 @@ Global $SuccesCount = 0
 Global $ChatStuckTimer = TimerInit()
 Global $Deadlocked = False
 
+; ==== Stuck Detection Variables ====
+Global $StuckDetectionTimer = TimerInit()
+Global $LastPositionX = 0
+Global $LastPositionY = 0
+Global $StuckThreshold = 600000 ; 10 minutes in milliseconds
+
 Global $BAG_SLOTS[18] = [0, 20, 5, 10, 10, 20, 41, 12, 20, 20, 20, 20, 20, 20, 20, 20, 20, 9]
 
 ;~ Any pcons you want to use during a run
@@ -3128,4 +3147,71 @@ Func Out($TEXT)
     _GUICtrlEdit_Scroll($GLOGBOX, $SB_LINEUP)
     ;UpdateLock()
 EndFunc   ;==>OUT
+
+;~ Description: Close Guild Wars client gracefully with disconnect detection
+Func CloseGuildWars()
+    Local $lCheck = True
+    Local $lDeadlock = TimerInit()
+    Do
+        Sleep(100)
+        $lCheck = GetMapLoading() <> 2 And GetAgentExists(-2)
+    Until $lCheck Or TimerDiff($lDeadlock) > 5000
+    If $lCheck = False Then
+       Out("Something Fucked Up!!")
+        Sleep(3000)
+        CloseGW()
+    EndIf
+EndFunc
+
+;~ Description: Force close Guild Wars client and exit script
+Func CloseGW()
+   If WinExists("Guild Wars - " & $charName) Then
+       WinClose("Guild Wars - " & $charName)
+    EndIf
+    Sleep(2000)
+    If WinExists("Guild Wars - " & $charName) Then
+       WinKill("Guild Wars - " & $charName)
+    EndIf
+    Sleep(3000)
+    Exit
+EndFunc
+
+;~ Description: Check if character is stuck and restart client if needed
+Func CheckStuckCharacter()
+    Local $currentX = Agent_GetAgentInfo(-2, "X")
+    Local $currentY = Agent_GetAgentInfo(-2, "Y")
+    
+    ; Initialize position on first call
+    If $LastPositionX = 0 And $LastPositionY = 0 Then
+        $LastPositionX = $currentX
+        $LastPositionY = $currentY
+        $StuckDetectionTimer = TimerInit()
+        Return
+    EndIf
+    
+    ; Check if position has changed (with small tolerance for minor movements)
+    If Abs($currentX - $LastPositionX) > 50 Or Abs($currentY - $LastPositionY) > 50 Then
+        ; Character moved, reset timer and update position
+        $LastPositionX = $currentX
+        $LastPositionY = $currentY
+        $StuckDetectionTimer = TimerInit()
+        Return
+    EndIf
+    
+    ; Check if stuck for too long
+    If TimerDiff($StuckDetectionTimer) > $StuckThreshold Then
+        Out("Character stuck for 10+ minutes! Restarting client...")
+        CloseGW()
+    EndIf
+EndFunc
+
+;~ Description: Periodic stuck check that can be called from main loops
+Func PeriodicStuckCheck()
+    ; Only check every 30 seconds to avoid performance impact
+    Static $lastCheck = 0
+    If TimerDiff($lastCheck) < 30000 Then Return ; 30 seconds
+    
+    $lastCheck = TimerInit()
+    CheckStuckCharacter()
+EndFunc
 #EndRegion

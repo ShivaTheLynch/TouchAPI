@@ -8,7 +8,7 @@
 #ce
 
 #RequireAdmin
-#include "../../API/_GwAu3.au3"
+#include "C:/Users/touch/OneDrive/Bureaublad/GwAu3-main/API/_GwAu3.au3"
 #include "GwAu3_AddOns.au3"
 
 Global Const $doLoadLoggedChars = True
@@ -122,6 +122,10 @@ Func MainFarm()
             Return
         EndIf
 		sleep(2000)
+        
+        ; Check if character is stuck (periodic check)
+        PeriodicStuckCheck()
+        
         CombatLoop()
         If GetLuxonFaction() >= (GetMaxLuxonFaction() - 15000) Then DonateDemPoints()
     WEnd
