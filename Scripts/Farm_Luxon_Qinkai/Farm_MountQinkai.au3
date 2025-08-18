@@ -98,7 +98,7 @@ WEnd
 
 While True
     ; Check for disconnection in main loop
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected in main loop, stopping bot...")
         ExitLoop
     EndIf
@@ -110,12 +110,11 @@ While True
     EndIf
 WEnd
 
-
 ; --------- Start of Bot --------------
 Func MainFarm()
 
     ; Check for disconnection before starting
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping bot...")
         Return
     EndIf
@@ -124,7 +123,7 @@ Func MainFarm()
 
     While (CountSlots() > 4)
         ; Check for disconnection in farm loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in farm loop, stopping...")
             Return
         EndIf
@@ -153,7 +152,7 @@ Func MainFarm()
 
     If (CountSlots() < 5) Then
         ; Check for disconnection before inventory management
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected before inventory, stopping...")
             Return
         EndIf
@@ -171,17 +170,83 @@ Func MainFarm()
     EndIf
 EndFunc
 
+; New function to check for disconnect and restart client if needed
+Func CheckForDisconnectAndRestart()
+    If Core_GetDisconnected() Then
+        Out("Disconnect detected! Attempting to restart client...")
+        
+        ; Close the current Guild Wars process
+        Local $l_h_GWWindow = Core_GetGuildWarsWindow()
+        If $l_h_GWWindow <> 0 Then
+            WinClose($l_h_GWWindow)
+            Sleep(2000)
+        EndIf
+        
+        ; Force close any remaining gw.exe processes
+        Local $l_h_ProcessList = ProcessList("gw.exe")
+        For $i = 1 To $l_h_ProcessList[0][0]
+            ProcessClose($l_h_ProcessList[$i][1])
+        Next
+        Sleep(2000)
+        
+        ; Try to find and restart Guild Wars with common installation paths
+        Local $l_s_GwPaths[4] = ["C:\Program Files\Guild Wars\Gw.exe", "C:\Program Files (x86)\Guild Wars\Gw.exe", "D:\Program Files\Guild Wars\Gw.exe", "D:\Program Files (x86)\Guild Wars\Gw.exe"]
+        Local $l_h_PID = 0
+        Local $l_s_UsedPath = ""
+        
+        For $i = 0 To UBound($l_s_GwPaths) - 1
+            If FileExists($l_s_GwPaths[$i]) Then
+                Out("Found Guild Wars at: " & $l_s_GwPaths[$i])
+                $l_h_PID = Run($l_s_GwPaths[$i], "", @SW_SHOW)
+                If $l_h_PID <> 0 Then
+                    $l_s_UsedPath = $l_s_GwPaths[$i]
+                    ExitLoop
+                EndIf
+            EndIf
+        Next
+        
+        If $l_h_PID = 0 Then
+            Out("Failed to restart Guild Wars. Please restart manually.")
+            Out("Tried paths: " & _ArrayToString($l_s_GwPaths, ", "))
+            Return True
+        EndIf
+        
+        ; Wait for client to start and reconnect
+        Out("Restarting Guild Wars from: " & $l_s_UsedPath)
+        Out("Waiting for client to reconnect...")
+        Sleep(10000) ; Wait 10 seconds for client to start
+        
+        ; Try to reinitialize the core
+        Local $l_i_attempts = 0
+        Local $l_i_maxAttempts = 30
+        While $l_i_attempts < $l_i_maxAttempts
+            Sleep(2000)
+            If Core_Initialize($charName, True) <> 0 Then
+                Out("Successfully reconnected and reinitialized!")
+                Return False ; No disconnect, continue
+            EndIf
+            $l_i_attempts += 1
+            Out("Reconnection attempt " & $l_i_attempts & "/" & $l_i_maxAttempts)
+        WEnd
+        
+        Out("Failed to reconnect after " & $l_i_maxAttempts & " attempts. Stopping bot.")
+        Return True ; Disconnect still exists, stop bot
+    EndIf
+    
+    Return False ; No disconnect
+EndFunc
+
 Func MapP()
 
 	; Check for disconnection before traveling
-	If CheckForDisconnect() Then
+	If CheckForDisconnectAndRestart() Then
 		Out("Disconnect detected, stopping travel...")
 		Return
 	EndIf
 
 	; Load builds, if it is the first run
 	If GUICtrlRead($Builds) = $GUI_CHECKED and $RunCount = 0 Then
-		; When Option is chosen and we are at the first Run, then we load the Hero_Builds
+		; When Option is chosen and we are at the first Run, then we will load the Hero_Builds
         ; Therefore we will go to a 8man Area, so all 7 Herobuilds will be loaded
         Out("Travelling to Great Temple of Balthazar")
         RndTravel($Town_ID_Great_Temple_of_Balthazar)
@@ -281,7 +346,7 @@ EndFunc
 
 Func FastWayOut()
 	; Check for disconnection before using gate trick
-	If CheckForDisconnect() Then
+	If CheckForDisconnectAndRestart() Then
 		Out("Disconnect detected, stopping gate trick...")
 		Return False
 	EndIf
@@ -306,7 +371,7 @@ EndFunc ;==>FastWayOut
 Func CombatLoop()
 
 	; Check for disconnection before starting combat
-	If CheckForDisconnect() Then
+	If CheckForDisconnectAndRestart() Then
 		Out("Disconnect detected, stopping combat...")
 		Return
 	EndIf
@@ -344,7 +409,7 @@ Func CombatLoop()
     EndIf
 
 	; Check for disconnection before starting farm
-	If CheckForDisconnect() Then
+	If CheckForDisconnectAndRestart() Then
 		Out("Disconnect detected, stopping farm...")
 		Return
 	EndIf
@@ -378,7 +443,7 @@ Func CombatLoop()
 
 	If GUICtrlRead($ResignGateTrickBox) = $GUI_CHECKED Then
 		; Check for disconnection before resigning
-		If CheckForDisconnect() Then
+		If CheckForDisconnectAndRestart() Then
 			Out("Disconnect detected before resign, stopping...")
 			Return
 		EndIf
@@ -391,7 +456,7 @@ Func CombatLoop()
 		Sleep(5000)
 	Else
 		; Check for disconnection before traveling
-		If CheckForDisconnect() Then
+		If CheckForDisconnectAndRestart() Then
 			Out("Disconnect detected before travel, stopping...")
 			Return
 		EndIf
@@ -406,7 +471,7 @@ EndFunc
 Func FarmMountQinkai()
 
     ; Check for disconnection before starting farm
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping farm...")
         Return
     EndIf
@@ -419,7 +484,7 @@ Func FarmMountQinkai()
     If GetPartyDefeated() then Return
     Do
         ; Check for disconnection in first farm loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in first farm loop, stopping...")
             Return
         EndIf
@@ -432,7 +497,7 @@ Func FarmMountQinkai()
     If GetPartyDefeated() then Return
     Do
         ; Check for disconnection in second farm loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in second farm loop, stopping...")
             Return
         EndIf
@@ -445,7 +510,7 @@ Func FarmMountQinkai()
     If GetPartyDefeated() then Return
     Do
         ; Check for disconnection in third farm loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in third farm loop, stopping...")
             Return
         EndIf
@@ -458,7 +523,7 @@ Func FarmMountQinkai()
     If GetPartyDefeated() then Return
     Do
         ; Check for disconnection in final farm loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in final farm loop, stopping...")
             Return
         EndIf
@@ -473,7 +538,7 @@ EndFunc ;==> FarmMountQinkai
 
 Func GetBlessing()
     ; Check for disconnection before getting blessing
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping blessing...")
         Return
     EndIf
@@ -528,7 +593,7 @@ Func DonateDemPoints()
     EndIf
     While GetLuxonFaction() >= 5000
         ; Check for disconnection in donation loop
-        If CheckForDisconnect() Then
+        If CheckForDisconnectAndRestart() Then
             Out("Disconnect detected in donation loop, stopping...")
             Return
         EndIf
@@ -555,7 +620,7 @@ EndFunc ;==> DonateDemPoints
 
 Func UseRunEnhancers()
     ; Check for disconnection before using enhancers
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping enhancer usage...")
         Return
     EndIf
@@ -570,7 +635,7 @@ EndFunc ;==> UseRunEnhancers
 
 Func FarmToSecondShrine()
     ; Check for disconnection before farming to second shrine
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping farm to second shrine...")
         Return
     EndIf
@@ -644,7 +709,7 @@ Func FarmToSecondShrine()
         Out("Restart from the first Shrine")      
         Do
             ; Check for disconnection while waiting for resurrection
-            If CheckForDisconnect() Then
+            If CheckForDisconnectAndRestart() Then
                 Out("Disconnect detected while waiting for resurrection, stopping...")
                 Return
             EndIf
@@ -658,7 +723,7 @@ EndFunc ;==> FarmToSecondShrine
 
 Func FarmToThirdShrine()
     ; Check for disconnection before farming to third shrine
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping farm to third shrine...")
         Return
     EndIf
@@ -697,7 +762,7 @@ Func FarmToThirdShrine()
         Out("Restart from the second Shrine")     
         Do
             ; Check for disconnection while waiting for resurrection
-            If CheckForDisconnect() Then
+            If CheckForDisconnectAndRestart() Then
                 Out("Disconnect detected while waiting for resurrection, stopping...")
                 Return
             EndIf
@@ -711,7 +776,7 @@ EndFunc ;==> FarmToThirdShrine
 
 Func FarmToFourthShrine()
     ; Check for disconnection before farming to fourth shrine
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping farm to fourth shrine...")
         Return
     EndIf
@@ -737,7 +802,7 @@ Func FarmToFourthShrine()
         Out("Restart from the third Shrine")    
         Do
             ; Check for disconnection while waiting for resurrection
-            If CheckForDisconnect() Then
+            If CheckForDisconnectAndRestart() Then
                 Out("Disconnect detected while waiting for resurrection, stopping...")
                 Return
             EndIf
@@ -751,7 +816,7 @@ EndFunc ;==> FarmToFourthShrine
 
 Func FarmToEnd()
     ; Check for disconnection before farming to end
-    If CheckForDisconnect() Then
+    If CheckForDisconnectAndRestart() Then
         Out("Disconnect detected, stopping farm to end...")
         Return
     EndIf
@@ -789,7 +854,7 @@ Func FarmToEnd()
         Out("Restart from the fifth Shrine")    
         Do
             ; Check for disconnection while waiting for resurrection
-            If CheckForDisconnect() Then
+            If CheckForDisconnectAndRestart() Then
                 Out("Disconnect detected while waiting for resurrection, stopping...")
                 Return
             EndIf
