@@ -265,8 +265,9 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 
 ### 🚀 Project Contributors
 - **Greg, Kleutschi, Glob of Armbraces** 🎉 for their bot logic and enhanced combat/looting ideas
-- **BubbleTea** 🌟 for inspiration behind TouchAPI and farming strategies
+- **BubbleTea** 🌟 for creating the bots i used as my base.
 - **All project contributors** 🌍 for their valuable contributions
+- **Touchwise** 🌍 For creating TouchAPI
 
 ### 📚 Special Thanks
 - **TouchAPI concept** for advanced automation frameworks
@@ -283,9 +284,7 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 - **Wiki**: Check the project wiki for detailed guides
 
 ### 🌐 Community Links
-- **Discord**: Join our community server
-- **Reddit**: Follow updates on r/GuildWars
-- **Forums**: Participate in community discussions
+- **Discord**: https://discord.gg/Ah3SufA5VH
 
 ---
 
