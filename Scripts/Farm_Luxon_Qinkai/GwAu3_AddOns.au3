@@ -3278,15 +3278,26 @@ Func CheckForDisconnect()
     
     ; If agent pointer is invalid or map ID is invalid, we might be disconnected
     If $agentPtr = 0 Or $mapID <= 0 Then
-        ; Wait a bit to see if it's just a temporary issue
-        Sleep(2000)
+        ; Wait longer to see if it's just map loading or a temporary issue
+        Sleep(5000) ; Increased from 2 to 5 seconds
+        
+        ; Check again
         $agentPtr = Agent_GetAgentPtr(-2)
         $mapID = Map_GetMapID()
         
-        ; If still invalid after waiting, we're disconnected
+        ; If still invalid after waiting, check one more time with additional delay
         If $agentPtr = 0 Or $mapID <= 0 Then
-            Out("Character disconnected! Restarting...")
-            Return True
+            Sleep(3000) ; Additional 3 second wait
+            $agentPtr = Agent_GetAgentPtr(-2)
+            $mapID = Map_GetMapID()
+            
+            ; Only report disconnect if we're still invalid after total 8 seconds
+            If $agentPtr = 0 Or $mapID <= 0 Then
+                Out("Character disconnected! Closing Guild Wars and restarting...")
+                Sleep(2000)
+                CloseGW() ; This will close the game and exit the script
+                Return True
+            EndIf
         EndIf
     EndIf
     
