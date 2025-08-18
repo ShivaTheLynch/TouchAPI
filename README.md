@@ -1,3 +1,65 @@
+🧩 TouchAPI Integration
+
+TouchAPI is an optional companion layer that supercharges GwAu3 with robust orchestration, quality-of-life automation, and battle/loot frameworks. It’s designed to sit “above” the base API, coordinating your bots while GwAu3 handles the low-level Guild Wars interface.
+
+What TouchAPI Adds
+
+Auto Start & Auto Restart
+
+Launch one or many bots with predefined profiles.
+
+Watchdog service that restarts a bot after crashes, map load failures, DCs, or stuck conditions.
+
+Optional staggered starts to reduce login spikes and minimize rate-limit issues.
+
+Session & Crash Recovery
+
+Detects character stuck states (no progress in X seconds, pathing loops) and triggers soft resets.
+
+Auto re-log, auto re-zone, and optional “return to safe outpost” routines.
+
+Enhanced Combat Framework
+
+Priority-based target selection (by profession, threat, distance, condition).
+
+Skill rotation helpers with cooldown tracking and conditional gating (energy, hex/condition presence, party HP).
+
+Interrupt/disable windows and kiting behaviors for dangerous skills or AoE.
+
+Smart Looting & Inventory
+
+Filter-driven auto-loot with rarity, type, and value thresholds.
+
+Bag routing (materials, ID’d gear, salvaged parts) and optional merchant/salvage cycles.
+
+Anti-clutter routines (ID → salvage → sell) with configurable safety rules.
+
+Scheduling & Profiles
+
+Per-character or per-role JSON/INI profiles (build, route, loot filters, merchants).
+
+Time-based schedule (farm A in the morning, farm B in the evening).
+
+Rotations across characters or accounts to spread risk and diversify income.
+
+Multi-Instance Orchestration
+
+Coordinate multiple Guild Wars instances (separate PIDs), with per-instance throttle controls.
+
+Party leader/follower roles, ready checks, and synchronized zone transitions.
+
+Telemetry & Logging
+
+Structured logs (action, zone, drops, runtime) for post-run analytics.
+
+Optional CSV export of runs and loot summaries.
+
+Extensible Hooks
+
+Pre/Post hooks for map load, party form, fight start/end, loot, and vendor trips.
+
+Simple plugin surface so you can inject custom logic without touching core loops.
+
 # GwAu3 - Guild Wars AutoIt3 API
 
 A comprehensive AutoIt3 API for automating and controlling Guild Wars.
