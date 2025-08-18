@@ -139,9 +139,6 @@ Func MainFarm()
             Return
         EndIf
 
-        ; Add periodic stuck check (every 30 seconds)
-        PeriodicStuckCheck()
-
         If Not $BotRunning Then
             Out("Bot Paused")
             GUICtrlSetState($Button, $GUI_ENABLE)
@@ -551,12 +548,6 @@ Func DonateDemPoints()
         Out("Buy Chunks of Amber")
     EndIf
     While GetKurzickFaction() >= 5000
-        ; Check for disconnection in donation loop
-        If CheckForDisconnect() Then
-            Out("Disconnect detected in donation loop, stopping...")
-            Return
-        EndIf
-
         If GUICtrlRead($DonateBox) = $GUI_CHECKED Then
             Ui_Dialog(0x87)
             sleep(1000)

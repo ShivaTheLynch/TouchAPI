@@ -506,11 +506,6 @@ EndFunc ;==> GetBlessing
 
 
 Func DonateDemPoints()
-    ; Check for disconnection before donating
-    If CheckForDisconnect() Then
-        Out("Disconnect detected, stopping donation...")
-        Return
-    EndIf
 
     Out("Travel to Cavalon - Donating Points")
     RndTravel($Town_ID_Cavalon)

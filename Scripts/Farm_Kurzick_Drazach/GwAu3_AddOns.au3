@@ -3190,7 +3190,7 @@ Global $Rendering = True
 Global $LastPositionX = 0
 Global $LastPositionY = 0
 Global $StuckDetectionTimer = TimerInit()
-Global $StuckThreshold = 600000 ; 10 minutes in milliseconds
+Global $StuckThreshold = 300000 ; 5 minutes in milliseconds
 #EndRegion
 
 #Region Gui
@@ -3263,7 +3263,7 @@ Func CheckStuckCharacter()
     
     ; Check if stuck for too long
     If TimerDiff($StuckDetectionTimer) > $StuckThreshold Then
-        Out("Character stuck for 10+ minutes! Restarting client...")
+        Out("Character stuck for 5+ minutes! Restarting client...")
         CloseGW()
     EndIf
 EndFunc
@@ -3284,6 +3284,18 @@ Func CheckForDisconnect()
     Local $agentPtr = Agent_GetAgentPtr(-2)
     Local $mapID = Map_GetMapID()
     
+    ; Additional check: Are we back at character selection screen?
+    Local $charName = Player_GetCharname()
+    Local $isAtCharSelect = ($charName = "" Or $charName = "Unknown")
+    
+    ; If we're at character selection screen, we're definitely disconnected
+    If $isAtCharSelect Then
+        Out("Character selection screen detected! Closing Guild Wars and restarting...")
+        Sleep(2000)
+        CloseGW() ; This will close the game and exit the script
+        Return True
+    EndIf
+    
     ; If agent pointer is invalid or map ID is invalid, we might be disconnected
     If $agentPtr = 0 Or $mapID <= 0 Then
         ; Wait longer to see if it's just map loading or a temporary issue
@@ -3292,12 +3304,32 @@ Func CheckForDisconnect()
         ; Check again
         $agentPtr = Agent_GetAgentPtr(-2)
         $mapID = Map_GetMapID()
+        $charName = Player_GetCharname()
+        $isAtCharSelect = ($charName = "" Or $charName = "Unknown")
+        
+        ; If we're at character selection screen, we're definitely disconnected
+        If $isAtCharSelect Then
+            Out("Character selection screen detected! Closing Guild Wars and restarting...")
+            Sleep(2000)
+            CloseGW() ; This will close the game and exit the script
+            Return True
+        EndIf
         
         ; If still invalid after waiting, check one more time with additional delay
         If $agentPtr = 0 Or $mapID <= 0 Then
             Sleep(3000) ; Additional 3 second wait
             $agentPtr = Agent_GetAgentPtr(-2)
             $mapID = Map_GetMapID()
+            $charName = Player_GetCharname()
+            $isAtCharSelect = ($charName = "" Or $charName = "Unknown")
+            
+            ; If we're at character selection screen, we're definitely disconnected
+            If $isAtCharSelect Then
+                Out("Character selection screen detected! Closing Guild Wars and restarting...")
+                Sleep(2000)
+                CloseGW() ; This will close the game and exit the script
+                Return True
+            EndIf
             
             ; Only report disconnect if we're still invalid after total 8 seconds
             If $agentPtr = 0 Or $mapID <= 0 Then
