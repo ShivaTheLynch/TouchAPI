@@ -561,6 +561,11 @@ Func CheckArrayPscon($lModelID)
 EndFunc   ;==>CheckArrayPscon
 
 Func Inventory()
+	; Check for disconnection before inventory management
+	If CheckForDisconnect() Then
+		Out("Disconnect detected, stopping inventory management...")
+		Return
+	EndIf
 
 	Out("Travelling to Eye of the North")
 	RndTravel($Town_ID_EyeOfTheNorth)
@@ -575,11 +580,23 @@ Func Inventory()
 
 	Out("Identifying")
 	For $i = 1 To 4
+		; Check for disconnection during identification
+		If CheckForDisconnect() Then
+			Out("Disconnect detected during identification, stopping...")
+			Return
+		EndIf
+
 		Ident($i)
 	Next
 
 	Out("Selling")
 	For $i = 1 To 4
+		; Check for disconnection during selling
+		If CheckForDisconnect() Then
+			Out("Disconnect detected during selling, stopping...")
+			Return
+		EndIf
+
 		Sell($i)
 	Next
 
@@ -591,26 +608,56 @@ Func Inventory()
 	If FindRareRuneOrInsignia() <> 0 Then
 		Out("Salvage all Runes")
 		For $i = 1 To 4
+			; Check for disconnection during salvage
+			If CheckForDisconnect() Then
+				Out("Disconnect detected during salvage, stopping...")
+				Return
+			EndIf
+
 			Salvage($i)
 		Next
 		Out("Second Round of Salvage")
 		For $i = 1 To 4
+			; Check for disconnection during second salvage
+			If CheckForDisconnect() Then
+				Out("Disconnect detected during second salvage, stopping...")
+				Return
+			EndIf
+
 			Salvage($i)
 		Next
 
 		Out("Sell leftover items")
 		For $i = 1 To 4
+			; Check for disconnection during leftover selling
+			If CheckForDisconnect() Then
+				Out("Disconnect detected during leftover selling, stopping...")
+				Return
+			EndIf
+
 			Sell($i)
 		Next
 	EndIf
 
 	While FindRareRuneOrInsignia() <> 0
+		; Check for disconnection in rune processing loop
+		If CheckForDisconnect() Then
+			Out("Disconnect detected in rune processing loop, stopping...")
+			Return
+		EndIf
+
 		Out("Move to Rune Trader")
 		RuneTraderEotN()
 		Sleep(2000)
 
 		Out("Sell Runes")
 		For $i = 1 To 4
+			; Check for disconnection during rune selling
+			If CheckForDisconnect() Then
+				Out("Disconnect detected during rune selling, stopping...")
+				Return
+			EndIf
+
 			SellRunes($i)
 		Next
 		Sleep(2000)
@@ -3150,14 +3197,22 @@ EndFunc   ;==>OUT
 
 ;~ Description: Close Guild Wars client gracefully with disconnect detection
 Func CloseGuildWars()
+    ; Check if character is actually disconnected by verifying agent pointer and map loading
     Local $lCheck = True
     Local $lDeadlock = TimerInit()
-    Do
-        Sleep(100)
-        $lCheck = GetMapLoading() <> 2 And GetAgentExists(-2)
-    Until $lCheck Or TimerDiff($lDeadlock) > 5000
+    Local $currentMapID = Map_GetMapID()
+    
+    ; Only check for disconnection if we're in a valid map
+    If $currentMapID > 0 Then
+        Do
+            Sleep(100)
+            ; Check if agent pointer is valid and if we can still get map info
+            $lCheck = Agent_GetAgentPtr(-2) <> 0 And Map_GetMapID() > 0
+        Until $lCheck Or TimerDiff($lDeadlock) > 5000
+    EndIf
+    
     If $lCheck = False Then
-       Out("Something Fucked Up!!")
+        Out("Connection lost or character disconnected!")
         Sleep(3000)
         CloseGW()
     EndIf
@@ -3214,4 +3269,28 @@ Func PeriodicStuckCheck()
     $lastCheck = TimerInit()
     CheckStuckCharacter()
 EndFunc
+
+;~ Description: Check for disconnection without false positives
+Func CheckForDisconnect()
+    ; Check if character is actually disconnected
+    Local $agentPtr = Agent_GetAgentPtr(-2)
+    Local $mapID = Map_GetMapID()
+    
+    ; If agent pointer is invalid or map ID is invalid, we might be disconnected
+    If $agentPtr = 0 Or $mapID <= 0 Then
+        ; Wait a bit to see if it's just a temporary issue
+        Sleep(2000)
+        $agentPtr = Agent_GetAgentPtr(-2)
+        $mapID = Map_GetMapID()
+        
+        ; If still invalid after waiting, we're disconnected
+        If $agentPtr = 0 Or $mapID <= 0 Then
+            Out("Character disconnected! Restarting...")
+            Return True
+        EndIf
+    EndIf
+    
+    Return False
+EndFunc
+
 #EndRegion

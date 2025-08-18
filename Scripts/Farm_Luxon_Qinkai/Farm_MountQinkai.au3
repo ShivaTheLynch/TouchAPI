@@ -11,6 +11,9 @@
 #include "../../API/_GwAu3.au3"
 #include "GwAu3_AddOns.au3"
 
+; Map IDs used in this farm script
+Global Const $FARM_MAPS[4] = [$MAP_ID_MountQinkai, $Town_ID_AspenwoodgateLuxon, $Town_ID_Great_Temple_of_Balthazar, $Town_ID_Cavalon]
+
 Global Const $doLoadLoggedChars = True
 Opt("GUIOnEventMode", True)
 Opt("GUICloseOnESC", False)
@@ -94,6 +97,12 @@ While Not $BotRunning
 WEnd
 
 While True
+    ; Check for disconnection in main loop
+    If CheckForDisconnect() Then
+        Out("Disconnect detected in main loop, stopping bot...")
+        ExitLoop
+    EndIf
+
     If $BotRunning = True Then
         MainFarm()
     Else
@@ -105,9 +114,21 @@ WEnd
 ; --------- Start of Bot --------------
 Func MainFarm()
 
+    ; Check for disconnection before starting
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping bot...")
+        Return
+    EndIf
+
     If GetLuxonFaction() >= (GetMaxLuxonFaction() - 15000) Then DonateDemPoints()
 
     While (CountSlots() > 4)
+        ; Check for disconnection in farm loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in farm loop, stopping...")
+            Return
+        EndIf
+
         If Not $BotRunning Then
             Out("Bot Paused")
             GUICtrlSetState($Button, $GUI_ENABLE)
@@ -131,6 +152,12 @@ Func MainFarm()
     WEnd
 
     If (CountSlots() < 5) Then
+        ; Check for disconnection before inventory management
+        If CheckForDisconnect() Then
+            Out("Disconnect detected before inventory, stopping...")
+            Return
+        EndIf
+
         If Not $BotRunning Then
             Out("Bot Paused")
             GUICtrlSetState($Button, $GUI_ENABLE)
@@ -145,6 +172,12 @@ Func MainFarm()
 EndFunc
 
 Func MapP()
+
+	; Check for disconnection before traveling
+	If CheckForDisconnect() Then
+		Out("Disconnect detected, stopping travel...")
+		Return
+	EndIf
 
 	; Load builds, if it is the first run
 	If GUICtrlRead($Builds) = $GUI_CHECKED and $RunCount = 0 Then
@@ -247,6 +280,12 @@ Func MapP()
 EndFunc
 
 Func FastWayOut()
+	; Check for disconnection before using gate trick
+	If CheckForDisconnect() Then
+		Out("Disconnect detected, stopping gate trick...")
+		Return False
+	EndIf
+
 	Out("You have chosen the gate trick option.")
     Out("What a wise fella you are!")
     Out("Now take you legs and run to the gate!!!")
@@ -265,6 +304,12 @@ EndFunc ;==>FastWayOut
 
 ; Here, the Magic happens
 Func CombatLoop()
+
+	; Check for disconnection before starting combat
+	If CheckForDisconnect() Then
+		Out("Disconnect detected, stopping combat...")
+		Return
+	EndIf
 
 	; Go To Outpost
 	MapP()
@@ -298,6 +343,12 @@ Func CombatLoop()
         EndIf
     EndIf
 
+	; Check for disconnection before starting farm
+	If CheckForDisconnect() Then
+		Out("Disconnect detected, stopping farm...")
+		Return
+	EndIf
+
 	Out("Exiting Outpost")
 	MoveTo(-5096.79, 12933.94)
 	Map_Move(-5700, 13900)
@@ -326,6 +377,12 @@ Func CombatLoop()
 	UpdateStatistics()
 
 	If GUICtrlRead($ResignGateTrickBox) = $GUI_CHECKED Then
+		; Check for disconnection before resigning
+		If CheckForDisconnect() Then
+			Out("Disconnect detected before resign, stopping...")
+			Return
+		EndIf
+
 		Resign()
 		Sleep(5000)
 		Map_ReturnToOutpost()
@@ -333,6 +390,12 @@ Func CombatLoop()
 		Map_WaitMapLoading($Town_ID_AspenwoodgateLuxon, 0)
 		Sleep(5000)
 	Else
+		; Check for disconnection before traveling
+		If CheckForDisconnect() Then
+			Out("Disconnect detected before travel, stopping...")
+			Return
+		EndIf
+
 		RndTravel($Town_ID_AspenwoodgateLuxon)
         Sleep(5000)
 	EndIf
@@ -342,6 +405,12 @@ EndFunc
 
 Func FarmMountQinkai()
 
+    ; Check for disconnection before starting farm
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping farm...")
+        Return
+    EndIf
+
     If GetPartyDead() Then Return
     GetBlessing()
     $RezShrine = 1
@@ -349,6 +418,12 @@ Func FarmMountQinkai()
     Out("Now let's Farm some Luxon Points")
     If GetPartyDefeated() then Return
     Do
+        ; Check for disconnection in first farm loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in first farm loop, stopping...")
+            Return
+        EndIf
+
         If GetPartyDefeated() then ExitLoop
         UseRunEnhancers() ; Consets and stuff like that
         FarmToSecondShrine()
@@ -356,6 +431,12 @@ Func FarmMountQinkai()
 
     If GetPartyDefeated() then Return
     Do
+        ; Check for disconnection in second farm loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in second farm loop, stopping...")
+            Return
+        EndIf
+
         If GetPartyDefeated() then ExitLoop
         UseRunEnhancers() ; Consets and stuff like that
         FarmToThirdShrine()
@@ -363,6 +444,12 @@ Func FarmMountQinkai()
 
     If GetPartyDefeated() then Return
     Do
+        ; Check for disconnection in third farm loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in third farm loop, stopping...")
+            Return
+        EndIf
+
         If GetPartyDefeated() then ExitLoop
         UseRunEnhancers() ; Consets and stuff like that
         FarmToFourthShrine()
@@ -370,6 +457,12 @@ Func FarmMountQinkai()
     
     If GetPartyDefeated() then Return
     Do
+        ; Check for disconnection in final farm loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in final farm loop, stopping...")
+            Return
+        EndIf
+
         If GetPartyDefeated() then ExitLoop
         UseRunEnhancers() ; Consets and stuff like that
         FarmToEnd()
@@ -379,6 +472,12 @@ EndFunc ;==> FarmMountQinkai
 
 
 Func GetBlessing()
+    ; Check for disconnection before getting blessing
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping blessing...")
+        Return
+    EndIf
+
     If GetisDead(-2) Then Return
     Out("Get the Blessing!")
     MoveTo(-8394.10, -9863.09)
@@ -407,6 +506,12 @@ EndFunc ;==> GetBlessing
 
 
 Func DonateDemPoints()
+    ; Check for disconnection before donating
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping donation...")
+        Return
+    EndIf
+
     Out("Travel to Cavalon - Donating Points")
     RndTravel($Town_ID_Cavalon)
     Sleep(7000)
@@ -427,6 +532,12 @@ Func DonateDemPoints()
         Out("Buy Jadeite Shards")
     EndIf
     While GetLuxonFaction() >= 5000
+        ; Check for disconnection in donation loop
+        If CheckForDisconnect() Then
+            Out("Disconnect detected in donation loop, stopping...")
+            Return
+        EndIf
+
         If GUICtrlRead($DonateBox) = $GUI_CHECKED Then
             Ui_Dialog(0x87)
             sleep(1000)
@@ -448,6 +559,12 @@ Func DonateDemPoints()
 EndFunc ;==> DonateDemPoints
 
 Func UseRunEnhancers()
+    ; Check for disconnection before using enhancers
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping enhancer usage...")
+        Return
+    EndIf
+
     If GUICtrlRead($PconsBox) = $GUI_CHECKED Then
         Out("Eat some juicy Snacks.")
         If GetPartyDefeated() Then Return
@@ -457,6 +574,12 @@ Func UseRunEnhancers()
 EndFunc ;==> UseRunEnhancers
 
 Func FarmToSecondShrine()
+    ; Check for disconnection before farming to second shrine
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping farm to second shrine...")
+        Return
+    EndIf
+
     If Not GetPartyDead() then Out("Kill some Yetis")
     AggroMoveToEx(-11345.94, -9236.53, 150)
     AggroMoveToEx(-13374.57, -8792.12, 150)
@@ -525,6 +648,12 @@ Func FarmToSecondShrine()
         Out("Damn son, you are a disappointment")
         Out("Restart from the first Shrine")      
         Do
+            ; Check for disconnection while waiting for resurrection
+            If CheckForDisconnect() Then
+                Out("Disconnect detected while waiting for resurrection, stopping...")
+                Return
+            EndIf
+
             Sleep(250)
         Until GetPartyDead() = False
     Else
@@ -533,6 +662,12 @@ Func FarmToSecondShrine()
 EndFunc ;==> FarmToSecondShrine
 
 Func FarmToThirdShrine()
+    ; Check for disconnection before farming to third shrine
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping farm to third shrine...")
+        Return
+    EndIf
+
     If Not GetPartyDead() then Out("Kill Nagas")
     AggroMoveToEx(68.80, -2812.41, 150)
 
@@ -566,6 +701,12 @@ Func FarmToThirdShrine()
         Out("Seriously? Disgraceful!!!")
         Out("Restart from the second Shrine")     
         Do
+            ; Check for disconnection while waiting for resurrection
+            If CheckForDisconnect() Then
+                Out("Disconnect detected while waiting for resurrection, stopping...")
+                Return
+            EndIf
+
             Sleep(250)
         Until GetPartyDead() = False
     Else
@@ -574,6 +715,12 @@ Func FarmToThirdShrine()
 EndFunc ;==> FarmToThirdShrine
 
 Func FarmToFourthShrine()
+    ; Check for disconnection before farming to fourth shrine
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping farm to fourth shrine...")
+        Return
+    EndIf
+
     If Not GetPartyDead() then Out("Kill Rot Wallow")
     AggroMoveToEx(1967.51, 3169.33, 150)
     AggroMoveToEx(4816.43, 5845.84, 150)
@@ -594,6 +741,12 @@ Func FarmToFourthShrine()
         Out("This is somewhat embarrassing!")
         Out("Restart from the third Shrine")    
         Do
+            ; Check for disconnection while waiting for resurrection
+            If CheckForDisconnect() Then
+                Out("Disconnect detected while waiting for resurrection, stopping...")
+                Return
+            EndIf
+
             Sleep(250)
         Until GetPartyDead() = False
     Else
@@ -602,6 +755,12 @@ Func FarmToFourthShrine()
 EndFunc ;==> FarmToFourthShrine
 
 Func FarmToEnd()
+    ; Check for disconnection before farming to end
+    If CheckForDisconnect() Then
+        Out("Disconnect detected, stopping farm to end...")
+        Return
+    EndIf
+
     If Not GetPartyDead() then Out("Oni Spawn Point")
     AggroMoveToEx(15533.14, 6853.51, 150)
     AggroMoveToEx(15695.05, 4637.03, 150)
@@ -634,6 +793,12 @@ Func FarmToEnd()
         Out("Boy oh boy ... ")
         Out("Restart from the fifth Shrine")    
         Do
+            ; Check for disconnection while waiting for resurrection
+            If CheckForDisconnect() Then
+                Out("Disconnect detected while waiting for resurrection, stopping...")
+                Return
+            EndIf
+
             Sleep(250)
         Until GetPartyDead() = False
     Else
