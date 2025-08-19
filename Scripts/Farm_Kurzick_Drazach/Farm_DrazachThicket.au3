@@ -85,7 +85,7 @@ If $g_bAutoStart And $charName <> "" Then
     
     ; Update statistics
     $KurzickTitle = GetKurzickTitle()
-    Global Const $KurzickPointsStart = GetKurzickTitlePoints()
+    Global $KurzickPointsStart = GetKurzickTitlePoints()
     $KurzickPointsGained = GetKurzickTitlePoints() - $KurzickPointsStart
     UpdateStatistics()
     
@@ -627,8 +627,8 @@ Func DonateDemPoints()
         EndIf
     WEnd
 
-    $KurzPointsGained = GetKurzickTitlePoints() - $KurzPointsStart
-    $KurzTitle = GetKurzickTitle()
+    $KurzickPointsGained = GetKurzickTitlePoints() - $KurzickPointsStart
+    $KurzickTitle = GetKurzickTitle()
 
 	UpdateStatistics()
     Return
