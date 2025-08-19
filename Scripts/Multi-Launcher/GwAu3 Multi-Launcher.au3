@@ -51,7 +51,6 @@ Global $aAccounts[0][8] ; [email, password, character, path, pid, keepalive, bot
 Global $aWindowTitleQueue[0][2] ; [PID, AccountIndex]
 Global $aAvailableBots[0][2] ; [filename, full path]
 Global $aBotSelection[0] ; Bot selection for each account
-Global $aBotLaunchSelection[0] ; Bot launch selection for Launch All feature
 Global $aGWArguments[35][3] ; Guild Wars available arguments
 
 ; --- Configuration ---
@@ -74,7 +73,6 @@ Global $g_hAccountsImageList = 0
 ; --- GUI Handles - Labels ---
 Global $lblActiveCount
 Global $lblTotalCount
-Global $lblSelectedCount
 Global $lblStatusIndicator
 Global $lblActivityText
 Global $lblMemoryUsage
@@ -86,9 +84,6 @@ Global $btnEdit
 Global $btnDelete
 Global $btnLaunch
 Global $btnLaunchAll
-Global $btnLaunchAllBots
-Global $btnSelectAll
-Global $btnClearAll
 Global $btnShortcut
 Global $btnMaster
 Global $btnRefresh
@@ -117,9 +112,6 @@ Global $aTempCheckboxes[35]
 ; --- Bot Selection Variables ---
 Global $g_iBotSelectionIndex
 Global $g_lvBots
-Global $btnSelectBot
-Global $btnClearBot
-Global $btnCancelBot
 
 ; ===== INITIALIZATION SEQUENCE =====
 _GDIPlus_Startup()
@@ -136,22 +128,6 @@ ReDim $aBotSelection[UBound($aAccounts)]
 For $i = 0 To UBound($aAccounts) - 1
     $aBotSelection[$i] = $aAccounts[$i][6]
 Next
-
-; Initialize bot launch selection array
-If UBound($aAccounts) > 0 Then
-    ReDim $aBotLaunchSelection[UBound($aAccounts)]
-    For $i = 0 To UBound($aAccounts) - 1
-        $aBotLaunchSelection[$i] = 0 ; 0 = not selected, 1 = selected
-    Next
-
-    ; Load bot launch selection states from INI file
-    For $i = 0 To UBound($aAccounts) - 1
-        $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-    Next
-Else
-    ; No accounts, initialize empty array
-    ReDim $aBotLaunchSelection[0]
-EndIf
 
 ; Process command line arguments
 If ProcessCommandLine() Then
@@ -193,21 +169,9 @@ Func LoadAccounts()
 
         $i += 1
     WEnd
-
 EndFunc
 
 Func SaveAccounts()
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then Return
-
     For $i = 0 To UBound($aAccounts) - 1
         IniWrite($sAccountsFile, "Account" & $i, "email", $aAccounts[$i][0])
         IniWrite($sAccountsFile, "Account" & $i, "password", _Crypt_EncryptData($aAccounts[$i][1], $sCryptKey, $CALG_AES_256))
@@ -215,7 +179,6 @@ Func SaveAccounts()
         IniWrite($sAccountsFile, "Account" & $i, "path", $aAccounts[$i][3])
         IniWrite($sAccountsFile, "Account" & $i, "keepalive", $aAccounts[$i][5])
         IniWrite($sAccountsFile, "Account" & $i, "bot", $aAccounts[$i][6])
-        IniWrite($sAccountsFile, "Account" & $i, "launch_selected", $aBotLaunchSelection[$i])
     Next
 
     Local $i = UBound($aAccounts)
@@ -278,22 +241,6 @@ EndFunc
 
 Func RefreshAccounts()
     LoadAccounts()
-    
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        RefreshListView()
-        AddLog("🔄 Accounts refreshed (no accounts found)", $COLOR_INFO)
-        Return
-    EndIf
-    
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-    
     RefreshListView()
     AddLog("🔄 Accounts refreshed", $COLOR_INFO)
 EndFunc
@@ -317,10 +264,6 @@ Func DeleteAccount()
         EndIf
 
         _ArrayDelete($aAccounts, $idx)
-        
-        ; Remove bot launch selection for deleted account
-        _ArrayDelete($aBotLaunchSelection, $idx)
-        
         SaveAccounts()
         RefreshListView()
         AddLog("🗑️ Account deleted: " & $email, $COLOR_INFO)
@@ -585,46 +528,18 @@ Func LaunchAll()
         Return
     EndIf
 
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        AddLog("⚠️ No accounts configured", $COLOR_WARNING)
-        Return
-    EndIf
-
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
-    ; Check if any bots are selected for launch
-    Local $selectedBots = 0
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        If $aBotLaunchSelection[$i] = 1 Then
-            $selectedBots += 1
-        EndIf
-    Next
-
-    If $selectedBots = 0 Then
-        AddLog("⚠️ No bots selected for launch. Please select which bots to launch first.", $COLOR_WARNING)
-        AddLog("💡 Tip: Click on the 'Launch' column checkboxes to select bots, or use 'Select All' button", $COLOR_INFO)
-        Return
-    EndIf
-
-    AddLog("🚀 Launching " & $selectedBots & " selected bots...", $COLOR_INFO)
+    AddLog("🚀 Launching all accounts...", $COLOR_INFO)
     Local $launched = 0
 
     For $i = 0 To UBound($aAccounts) - 1
-        If $aBotLaunchSelection[$i] = 1 And ($aAccounts[$i][4] = 0 Or Not ProcessExists($aAccounts[$i][4])) Then
+        If $aAccounts[$i][4] = 0 Or Not ProcessExists($aAccounts[$i][4]) Then
             LaunchAccount($i)
             $launched += 1
             Sleep(5000)
         EndIf
     Next
 
-    AddLog("✅ Launched " & $launched & " selected bots", $COLOR_SUCCESS)
+    AddLog("✅ Launched " & $launched & " accounts", $COLOR_SUCCESS)
 EndFunc
 
 Func LaunchSelected()
@@ -656,32 +571,6 @@ Func LaunchAvailableAccounts()
     If $launchedCount = 0 Then
         MsgBox_OnTop(48, "Info", "All accounts are already running!")
     EndIf
-EndFunc
-
-Func LaunchAllBots()
-    If $g_bUpdatingAccounts Then
-        AddLog("⚠️ Cannot launch during update process", $COLOR_WARNING)
-        Return
-    EndIf
-
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        AddLog("⚠️ No accounts configured", $COLOR_WARNING)
-        Return
-    EndIf
-
-    AddLog("🚀 Launching all bots...", $COLOR_INFO)
-    Local $launched = 0
-
-    For $i = 0 To UBound($aAccounts) - 1
-        If $aAccounts[$i][4] = 0 Or Not ProcessExists($aAccounts[$i][4]) Then
-            LaunchAccount($i)
-            $launched += 1
-            Sleep(5000)
-        EndIf
-    Next
-
-    AddLog("✅ Launched " & $launched & " bots", $COLOR_SUCCESS)
 EndFunc
 
 Func ApplyMulticlientPatch($hProcess)
@@ -1162,11 +1051,11 @@ EndFunc
 
 ; ===== MAIN GUI =====
 Func CreateModernGUI()
-    $hGUI = GUICreate("GwAu3 Multi-Launcher", 1400, 800, -1, -1, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
+    $hGUI = GUICreate("GwAu3 Multi-Launcher", 1024, 768, -1, -1, -1, BitOR($WS_EX_TOPMOST, $WS_EX_WINDOWEDGE))
     GUISetBkColor($COLOR_BACKGROUND2, $hGUI)
     GUISetOnEvent($GUI_EVENT_CLOSE, "ExitApp")
 
-    GUICtrlCreateLabel("", 0, 0, 1400, 60)
+    GUICtrlCreateLabel("", 0, 0, 1024, 60)
     GUICtrlSetBkColor(-1, $COLOR_HEADER)
 
     GUICtrlCreateLabel("GwAu3 Multi-Launcher", 20, 8, 400, 30, 0x0200)
@@ -1179,67 +1068,54 @@ Func CreateModernGUI()
     GUICtrlSetColor(-1, $COLOR_SUBTITLE)
     GUICtrlSetBkColor(-1, $COLOR_HEADER)
 
-    CreateDualColorStatsCard(20, 80, "Total Accounts", "0", $COLOR_SUCCESS, "0", $COLOR_INFO, "lblSelectedCount", "lblTotalCount")
-    CreateStatsCard(240, 80, "Active", "0", $COLOR_SUCCESS, "lblActiveCount")
-    CreateStatsCard(460, 80, "Memory Usage", "0 MB", $COLOR_WARNING, "lblMemoryUsage")
-    CreateStatsCard(680, 80, "CPU Usage", "0%", $COLOR_ACCENT, "lblCPUUsage")
+    CreateStatsCard(20, 80, "Total Accounts", "0", $COLOR_INFO, "lblTotalCount")
+    CreateStatsCard(195, 80, "Active", "0", $COLOR_SUCCESS, "lblActiveCount")
+    CreateStatsCard(370, 80, "Memory Usage", "0 MB", $COLOR_WARNING, "lblMemoryUsage")
+    CreateStatsCard(545, 80, "CPU Usage", "0%", $COLOR_ACCENT, "lblCPUUsage")
 
-    _GUICtrlSmiley_Create($EMOJI_ONLINE, 1350, 20, 20)
+    _GUICtrlSmiley_Create($EMOJI_ONLINE, 974, 20, 20)
 
-    $lblActivityText = GUICtrlCreateLabel("Ready", 1260, 26, 80, 20, 0x0002)
+    $lblActivityText = GUICtrlCreateLabel("Ready", 884, 26, 80, 20, 0x0002)
     GUICtrlSetFont($lblActivityText, 9, 400)
     GUICtrlSetColor($lblActivityText, $COLOR_HEADER_TEXT)
     GUICtrlSetBkColor($lblActivityText, $COLOR_HEADER)
 
-    CreateGroupBox(20, 175, 950, 380, "Accounts Management")
+    CreateGroupBox(20, 175, 685, 410, "Accounts Management")
 
-    $lvAccounts = GUICtrlCreateListView("", 35, 210, 920, 280, BitOR($LVS_REPORT, $LVS_SHOWSELALWAYS, $LVS_SINGLESEL), BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER))
+    $lvAccounts = GUICtrlCreateListView("", 35, 210, 650, 320, BitOR($LVS_REPORT, $LVS_SHOWSELALWAYS, $LVS_SINGLESEL), BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER))
     _GUICtrlListView_SetExtendedListViewStyle($lvAccounts, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER))
 
-    _GUICtrlListView_AddColumn($lvAccounts, "Status", 60)
-    _GUICtrlListView_AddColumn($lvAccounts, "Email", 220)
-    _GUICtrlListView_AddColumn($lvAccounts, "Character", 180)
-    _GUICtrlListView_AddColumn($lvAccounts, "Process", 70)
-    _GUICtrlListView_AddColumn($lvAccounts, "Uptime", 70)
-    _GUICtrlListView_AddColumn($lvAccounts, "Keep Alive", 90)
-    _GUICtrlListView_AddColumn($lvAccounts, "Bot Selection", 140)
-    _GUICtrlListView_AddColumn($lvAccounts, "Launch", 90)
-
-    ; Add tooltip for Launch column
-    Local $hLaunchHeader = GUICtrlCreateLabel("", 35 + 60 + 220 + 180 + 70 + 70 + 90 + 140, 210, 90, 20)
-    GUICtrlSetTip($hLaunchHeader, "Click to select/deselect this bot for Launch All feature")
+    _GUICtrlListView_AddColumn($lvAccounts, "Status", 45)
+    _GUICtrlListView_AddColumn($lvAccounts, "Email", 150)
+    _GUICtrlListView_AddColumn($lvAccounts, "Character", 130)
+    _GUICtrlListView_AddColumn($lvAccounts, "Process", 55)
+    _GUICtrlListView_AddColumn($lvAccounts, "Uptime", 55)
+    _GUICtrlListView_AddColumn($lvAccounts, "Keep Alive", 70)
+    _GUICtrlListView_AddColumn($lvAccounts, "Bot Selection", 150)
 
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 
-    $btnAdd = CreateEmojiButton(35, 510, 100, 32, "Add", $EMOJI_ADD, "ShowAddAccountDialog", $COLOR_SUCCESS)
-    $btnEdit = CreateEmojiButton(145, 510, 100, 32, "Edit", $EMOJI_EDIT, "ShowEditAccountDialog", $COLOR_INFO)
-    $btnDelete = CreateEmojiButton(255, 510, 100, 32, "Delete", $EMOJI_TRASH, "DeleteAccount", $COLOR_ERROR)
-    $btnLaunch = CreateEmojiButton(365, 510, 100, 32, "Launch", $EMOJI_PLAY, "LaunchSelected", $COLOR_ACCENT)
-    $btnLaunchAll = CreateEmojiButton(475, 510, 100, 32, "Launch Selected", $EMOJI_PLAY, "LaunchAll", $COLOR_WARNING)
-    $btnLaunchAllBots = CreateEmojiButton(585, 510, 100, 32, "Launch All", $EMOJI_PLAY, "LaunchAllBots", $COLOR_SUCCESS)
-    $btnSelectAll = CreateEmojiButton(695, 510, 100, 32, "Select All", $EMOJI_SUCCESS, "SelectAllBots", $COLOR_SECONDARY)
-    $btnClearAll = CreateEmojiButton(805, 510, 100, 32, "Clear All", $EMOJI_REMOVE, "ClearAllBots", $COLOR_ERROR)
+    Global $btnAdd = CreateEmojiButton(35, 540, 95, 35, "Add", $EMOJI_ADD, "ShowAddAccountDialog", $COLOR_SUCCESS)
+    Global $btnEdit = CreateEmojiButton(140, 540, 95, 35, "Edit", $EMOJI_EDIT, "ShowEditAccountDialog", $COLOR_INFO)
+    Global $btnDelete = CreateEmojiButton(245, 540, 95, 35, "Delete", $EMOJI_TRASH, "DeleteAccount", $COLOR_ERROR)
+    Global $btnLaunch = CreateEmojiButton(355, 540, 105, 35, "Launch", $EMOJI_PLAY, "LaunchSelected", $COLOR_ACCENT)
+    Global $btnLaunchAll = CreateEmojiButton(470, 540, 105, 35, "Launch All", $EMOJI_PLAY, "LaunchAll", $COLOR_WARNING)
+    Global $btnShortcut = CreateEmojiButton(585, 540, 100, 35, "Shortcut", $EMOJI_SAVE, "CreateShortcut", $COLOR_SECONDARY)
 
-    ; Help text for bot selection
-    GUICtrlCreateLabel("💡 Tip: Use 'Launch Selected' for selected bots, or 'Launch All' to launch all bots regardless of selection", 35, 550, 700, 20)
-    GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
-    GUICtrlSetColor(-1, $COLOR_SUBTITLE)
+    CreateGroupBox(20, 600, 980, 140, "Quick Actions")
 
-    CreateGroupBox(20, 580, 1350, 120, "Quick Actions")
+    Global $btnMaster = CreateEmojiButton(40, 635, 120, 35, "Master Link", $EMOJI_NETWORK, "CreateMasterShortcut", $COLOR_ACCENT)
+    Global $btnRefresh = CreateEmojiButton(170, 635, 120, 35, "Refresh", $EMOJI_REFRESH, "RefreshAccounts", $COLOR_INFO)
+    Global $btnUpdate = CreateEmojiButton(300, 635, 120, 35, "Update Accounts", $EMOJI_SETTINGS, "Updater", $COLOR_SECONDARY)
+    Global $btnHelp = CreateEmojiButton(430, 635, 120, 35, "Help", $EMOJI_HELP, "ShowHelp", $COLOR_SUCCESS)
 
-    $btnMaster = CreateEmojiButton(40, 605, 120, 32, "Master Link", $EMOJI_NETWORK, "CreateMasterShortcut", $COLOR_ACCENT)
-    $btnRefresh = CreateEmojiButton(170, 605, 120, 32, "Refresh", $EMOJI_REFRESH, "RefreshAccounts", $COLOR_INFO)
-    $btnUpdate = CreateEmojiButton(300, 605, 120, 32, "Update Accounts", $EMOJI_SETTINGS, "Updater", $COLOR_SECONDARY)
-    $btnHelp = CreateEmojiButton(430, 605, 120, 32, "Help", $EMOJI_HELP, "ShowHelp", $COLOR_SUCCESS)
-    $btnShortcut = CreateEmojiButton(560, 605, 120, 32, "Shortcut", $EMOJI_SAVE, "CreateShortcut", $COLOR_SECONDARY)
+    CreateGroupBox(720, 80, 280, 505, "Activity Log")
 
-    CreateGroupBox(990, 80, 380, 480, "Activity Log")
-
-    $g_h_LogText = _GUICtrlRichEdit_Create($hGUI, "", 1000, 115, 360, 430, BitOR($ES_AUTOVSCROLL, $ES_MULTILINE, $WS_VSCROLL, $ES_READONLY))
+    $g_h_LogText = _GUICtrlRichEdit_Create($hGUI, "", 730, 115, 260, 460, BitOR($ES_AUTOVSCROLL, $ES_MULTILINE, $WS_VSCROLL, $ES_READONLY))
     _GUICtrlRichEdit_SetBkColor($g_h_LogText, $COLOR_CARD_BG)
     _GUICtrlRichEdit_SetFont($g_h_LogText, 9, "Consolas")
 
-    $progressBar = GUICtrlCreateProgress(40, 720, 1320, 25)
+    $progressBar = GUICtrlCreateProgress(40, 690, 940, 25)
     GUICtrlSetBkColor($progressBar, $COLOR_BORDER)
 
     GUISetState(@SW_SHOW)
@@ -1249,35 +1125,22 @@ Func CreateModernGUI()
     AddLog("📊 " & UBound($aAccounts) & " accounts loaded", $COLOR_INFO)
 EndFunc
 
-Func CreateDualColorStatsCard($x, $y, $title, $value1, $color1, $value2, $color2, $varName1, $varName2)
-    GUICtrlCreateLabel("", $x, $y, 200, 80)
+Func CreateStatsCard($x, $y, $title, $value, $color, $varName)
+    GUICtrlCreateLabel("", $x, $y, 160, 80)
     GUICtrlSetBkColor(-1, $COLOR_CARD_BG)
 
-    GUICtrlCreateLabel("", $x, $y, 200, 3)
-    GUICtrlSetBkColor(-1, $COLOR_INFO)
+    GUICtrlCreateLabel("", $x, $y, 160, 3)
+    GUICtrlSetBkColor(-1, $color)
 
-    GUICtrlCreateLabel($title, $x + 10, $y + 10, 180, 20)
+    GUICtrlCreateLabel($title, $x + 10, $y + 10, 140, 20)
     GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
     GUICtrlSetColor(-1, $COLOR_SECONDARY)
     GUICtrlSetBkColor(-1, $COLOR_CARD_BG)
 
-    ; First value (selected count) in green
-    Assign($varName1, GUICtrlCreateLabel($value1, $x + 10, $y + 35, 80, 30, 0x01), 2)
-    GUICtrlSetFont(Eval($varName1), 20, 600, 0, "Segoe UI")
-    GUICtrlSetColor(Eval($varName1), $color1)
-    GUICtrlSetBkColor(Eval($varName1), $COLOR_CARD_BG)
-
-    ; Separator
-    GUICtrlCreateLabel("/", $x + 95, $y + 35, 20, 30, 0x01)
-    GUICtrlSetFont(-1, 20, 600, 0, "Segoe UI")
-    GUICtrlSetColor(-1, $COLOR_SECONDARY)
-    GUICtrlSetBkColor(-1, $COLOR_CARD_BG)
-
-    ; Second value (total count) in blue
-    Assign($varName2, GUICtrlCreateLabel($value2, $x + 120, $y + 35, 80, 30, 0x01), 2)
-    GUICtrlSetFont(Eval($varName2), 20, 600, 0, "Segoe UI")
-    GUICtrlSetColor(Eval($varName2), $color2)
-    GUICtrlSetBkColor(Eval($varName2), $COLOR_CARD_BG)
+    Assign($varName, GUICtrlCreateLabel($value, $x + 10, $y + 35, 140, 30, 0x01), 2)
+    GUICtrlSetFont(Eval($varName), 20, 600, 0, "Segoe UI")
+    GUICtrlSetColor(Eval($varName), $color)
+    GUICtrlSetBkColor(Eval($varName), $COLOR_CARD_BG)
 EndFunc
 
 Func CreateGroupBox($x, $y, $w, $h, $title)
@@ -1779,9 +1642,9 @@ Func ShowBotSelectionMenu($idx)
 
     GUICtrlSetOnEvent($g_lvBots, "OnBotListDoubleClick")
 
-    $btnSelectBot = CreateEmojiButton(75, 300, 90, 35, "Select", $EMOJI_SUCCESS, "OnBotSelect", $COLOR_SUCCESS)
-    $btnClearBot = CreateEmojiButton(175, 300, 90, 35, "Clear", $EMOJI_REMOVE, "OnBotClear", $COLOR_WARNING)
-    $btnCancelBot = CreateEmojiButton(275, 300, 90, 35, "Cancel", $EMOJI_ERROR, "CloseBotDialog", $COLOR_ERROR)
+    Global $btnSelectBot = CreateEmojiButton(75, 300, 90, 35, "Select", $EMOJI_SUCCESS, "OnBotSelect", $COLOR_SUCCESS)
+    Global $btnClearBot = CreateEmojiButton(175, 300, 90, 35, "Clear", $EMOJI_REMOVE, "OnBotClear", $COLOR_WARNING)
+    Global $btnCancelBot = CreateEmojiButton(275, 300, 90, 35, "Cancel", $EMOJI_ERROR, "CloseBotDialog", $COLOR_ERROR)
 
     GUISetState(@SW_SHOW, $g_hBotDialog)
 EndFunc
@@ -1848,12 +1711,7 @@ Func SaveNewAccount()
     $aAccounts[$idx][6] = ""
     $aAccounts[$idx][7] = 0
 
-    ; Initialize bot launch selection for new account
-    ReDim $aBotLaunchSelection[$idx + 1]
-    $aBotLaunchSelection[$idx] = 0
-
     IniWrite($sAccountsFile, "Account" & $idx, "arguments", $args)
-    IniWrite($sAccountsFile, "Account" & $idx, "launch_selected", "0")
 
     SaveAccounts()
     RefreshListView()
@@ -2104,23 +1962,6 @@ Func _AddEmojiToImageList($hImageList, $iEmojiID)
 EndFunc
 
 Func RefreshListView()
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        _GUICtrlListView_DeleteAllItems($lvAccounts)
-        $g_i_ActiveAccounts = 0
-        GUICtrlSetData($lblActivityText, "Ready")
-        GUICtrlSetData($btnLaunchAll, "Launch All")
-        Return
-    EndIf
-
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
     _GUICtrlListView_DeleteAllItems($lvAccounts)
     $g_i_ActiveAccounts = 0
 
@@ -2144,7 +1985,6 @@ Func RefreshListView()
         Local $uptime = "-"
         Local $keepAlive = "☐"
         Local $botName = "None"
-        Local $launchSelection = "☐"
 
         If $aAccounts[$i][4] > 0 And ProcessExists($aAccounts[$i][4]) Then
             $status = ""
@@ -2156,10 +1996,6 @@ Func RefreshListView()
 
         If $aAccounts[$i][5] = 1 Then
             $keepAlive = "☑"
-        EndIf
-
-        If $aBotLaunchSelection[$i] = 1 Then
-            $launchSelection = "☑"
         EndIf
 
         If $aAccounts[$i][6] <> "" Then
@@ -2179,7 +2015,6 @@ Func RefreshListView()
         _GUICtrlListView_AddSubItem($lvAccounts, $item, $uptime, 4)
         _GUICtrlListView_AddSubItem($lvAccounts, $item, $keepAlive, 5)
         _GUICtrlListView_AddSubItem($lvAccounts, $item, $botName, 6)
-        _GUICtrlListView_AddSubItem($lvAccounts, $item, $launchSelection, 7)
     Next
 
     If $g_i_ActiveAccounts > 0 Then
@@ -2187,25 +2022,6 @@ Func RefreshListView()
     Else
         GUICtrlSetData($lblActivityText, "Ready")
     EndIf
-
-    ; Update Launch All button text to show selected count
-    Local $selectedCount = 0
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        If $aBotLaunchSelection[$i] = 1 Then
-            $selectedCount += 1
-        EndIf
-    Next
-    
-    If $selectedCount > 0 Then
-        GUICtrlSetData($btnLaunchAll, "Launch Selected (" & $selectedCount & ")")
-    Else
-        GUICtrlSetData($btnLaunchAll, "Launch Selected")
-    EndIf
-
-    ; Update stats cards
-    GUICtrlSetData($lblSelectedCount, $selectedCount)
-    GUICtrlSetData($lblTotalCount, UBound($aAccounts))
-    GUICtrlSetData($lblActiveCount, $g_i_ActiveAccounts)
 EndFunc
 
 
@@ -2259,20 +2075,17 @@ Func CheckButtonHover()
     If Not IsArray($aCursor) Then Return
 
     Local $newHover = 0
-    Local $buttons[17][5] = [ _
+    Local $buttons[14][5] = [ _
         [$btnAdd, "Add", $EMOJI_ADD, $COLOR_SUCCESS, 95], _
         [$btnEdit, "Edit", $EMOJI_EDIT, $COLOR_INFO, 95], _
         [$btnDelete, "Delete", $EMOJI_TRASH, $COLOR_ERROR, 95], _
         [$btnLaunch, "Launch", $EMOJI_PLAY, $COLOR_ACCENT, 105], _
-        [$btnLaunchAll, "Launch Selected", $EMOJI_PLAY, $COLOR_WARNING, 105], _
-        [$btnLaunchAllBots, "Launch All", $EMOJI_PLAY, $COLOR_SUCCESS, 105], _
-        [$btnSelectAll, "Select All", $EMOJI_SUCCESS, $COLOR_SECONDARY, 100], _
-        [$btnClearAll, "Clear All", $EMOJI_REMOVE, $COLOR_ERROR, 100], _
+        [$btnLaunchAll, "Launch All", $EMOJI_PLAY, $COLOR_WARNING, 105], _
+        [$btnShortcut, "Shortcut", $EMOJI_SAVE, $COLOR_SECONDARY, 100], _
         [$btnMaster, "Master Link", $EMOJI_NETWORK, $COLOR_ACCENT, 120], _
         [$btnRefresh, "Refresh", $EMOJI_REFRESH, $COLOR_INFO, 120], _
         [$btnUpdate, "Update Accounts", $EMOJI_SETTINGS, $COLOR_SECONDARY, 120], _
         [$btnHelp, "Help", $EMOJI_HELP, $COLOR_SUCCESS, 120], _
-        [$btnShortcut, "Shortcut", $EMOJI_SAVE, $COLOR_SECONDARY, 120], _
         [$btnSaveDialog, "Save", $EMOJI_SAVE, $COLOR_SUCCESS, 90], _
         [$btnCancelDialog, "Cancel", $EMOJI_ERROR, $COLOR_ERROR, 90], _
         [$btnShowPassword, "", $bTempPasswordVisible ? $EMOJI_HIDDEN : $EMOJI_VISIBLE, $COLOR_INFO, 35], _
@@ -2338,8 +2151,6 @@ Func WM_NOTIFY($hWnd, $iMsg, $wParam, $lParam)
                         ToggleKeepAlive($iItem)
                     ElseIf $iItem >= 0 And $iSubItem = 6 Then
                         ShowBotSelectionMenu($iItem)
-                    ElseIf $iItem >= 0 And $iSubItem = 7 Then
-                        ToggleBotLaunchSelection($iItem)
                     EndIf
 
                 Case $NM_DBLCLK
@@ -2368,67 +2179,13 @@ Func ToggleKeepAlive($idx)
     IniWrite($sAccountsFile, "Account" & $idx, "keepalive", $aAccounts[$idx][5])
 EndFunc
 
-Func ToggleBotLaunchSelection($idx)
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        AddLog("⚠️ No accounts configured", $COLOR_WARNING)
-        Return
-    EndIf
-
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
-    If $idx >= UBound($aBotLaunchSelection) Then Return
-
-    If $aBotLaunchSelection[$idx] = 0 Then
-        $aBotLaunchSelection[$idx] = 1
-        _GUICtrlListView_SetItemText($lvAccounts, $idx, "☑", 7)
-        AddLog("✅ Bot selected for launch: " & $aAccounts[$idx][0], $COLOR_SUCCESS)
-    Else
-        $aBotLaunchSelection[$idx] = 0
-        _GUICtrlListView_SetItemText($lvAccounts, $idx, "☐", 7)
-        AddLog("❌ Bot deselected for launch: " & $aAccounts[$idx][0], $COLOR_INFO)
-    EndIf
-
-    IniWrite($sAccountsFile, "Account" & $idx, "launch_selected", $aBotLaunchSelection[$idx])
-
-    ; Automatically update stats cards and button text
-    UpdateLaunchSelectionDisplay()
-EndFunc
-
-Func UpdateLaunchSelectionDisplay()
-    ; Calculate selected count
-    Local $selectedCount = 0
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        If $aBotLaunchSelection[$i] = 1 Then
-            $selectedCount += 1
-        EndIf
-    Next
-
-    ; Update stats cards
-    GUICtrlSetData($lblSelectedCount, $selectedCount)
-    GUICtrlSetData($lblTotalCount, UBound($aAccounts))
-
-    ; Update Launch Selected button text
-    If $selectedCount > 0 Then
-        GUICtrlSetData($btnLaunchAll, "Launch Selected (" & $selectedCount & ")")
-    Else
-        GUICtrlSetData($btnLaunchAll, "Launch Selected")
-    EndIf
-EndFunc
-
 Func SetListViewCursor()
     Local $aCursorInfo = GUIGetCursorInfo($hGUI)
     If Not IsArray($aCursorInfo) Then Return
 
     If $aCursorInfo[4] = $lvAccounts Then
         Local $aHit = _GUICtrlListView_SubItemHitTest($lvAccounts)
-        If $aHit[0] >= 0 And ($aHit[1] = 5 Or $aHit[1] = 6 Or $aHit[1] = 7) Then
+        If $aHit[0] >= 0 And ($aHit[1] = 5 Or $aHit[1] = 6) Then
             GUISetCursor(0, 1)
         Else
             GUISetCursor(2, 1)
@@ -2620,81 +2377,6 @@ Func CreateMasterShortcut()
     Else
         AddLog("❌ Failed to create master shortcut", $COLOR_ERROR)
     EndIf
-EndFunc
-
-Func SelectAllBots()
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        AddLog("⚠️ No accounts configured", $COLOR_WARNING)
-        Return
-    EndIf
-
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
-    Local $allSelected = True
-    
-    ; Check if all bots are currently selected
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        If $aBotLaunchSelection[$i] = 0 Then
-            $allSelected = False
-            ExitLoop
-        EndIf
-    Next
-    
-    ; Toggle selection state
-    Local $newState = $allSelected ? 0 : 1
-    Local $action = $allSelected ? "deselected" : "selected"
-    
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        $aBotLaunchSelection[$i] = $newState
-        IniWrite($sAccountsFile, "Account" & $i, "launch_selected", $newState)
-    Next
-    
-    ; Update the ListView display for the Launch column
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        Local $displayText = $newState ? "☑" : "☐"
-        _GUICtrlListView_SetItemText($lvAccounts, $i, $displayText, 7)
-    Next
-    
-    ; Update stats cards and button text
-    UpdateLaunchSelectionDisplay()
-    AddLog("✅ All bots " & $action, $COLOR_SUCCESS)
-EndFunc
-
-Func ClearAllBots()
-    ; Handle case where no accounts exist
-    If UBound($aAccounts) = 0 Then
-        AddLog("⚠️ No accounts configured", $COLOR_WARNING)
-        Return
-    EndIf
-
-    ; Ensure bot launch selection array is properly sized
-    If UBound($aBotLaunchSelection) <> UBound($aAccounts) Then
-        ReDim $aBotLaunchSelection[UBound($aAccounts)]
-        For $i = 0 To UBound($aBotLaunchSelection) - 1
-            $aBotLaunchSelection[$i] = Number(IniRead($sAccountsFile, "Account" & $i, "launch_selected", "0"))
-        Next
-    EndIf
-
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        $aBotLaunchSelection[$i] = 0
-        IniWrite($sAccountsFile, "Account" & $i, "launch_selected", "0")
-    Next
-    
-    ; Update the ListView display for the Launch column
-    For $i = 0 To UBound($aBotLaunchSelection) - 1
-        _GUICtrlListView_SetItemText($lvAccounts, $i, "☐", 7)
-    Next
-    
-    ; Update stats cards and button text
-    UpdateLaunchSelectionDisplay()
-    AddLog("✅ All bot launch selections cleared", $COLOR_SUCCESS)
 EndFunc
 
 
@@ -3012,22 +2694,4 @@ Func ExitApp()
     _GUICtrlSmiley_Shutdown()
     _GDIPlus_Shutdown()
     Exit
-EndFunc
-
-Func CreateStatsCard($x, $y, $title, $value, $color, $varName)
-    GUICtrlCreateLabel("", $x, $y, 200, 80)
-    GUICtrlSetBkColor(-1, $COLOR_CARD_BG)
-
-    GUICtrlCreateLabel("", $x, $y, 200, 3)
-    GUICtrlSetBkColor(-1, $color)
-
-    GUICtrlCreateLabel($title, $x + 10, $y + 10, 180, 20)
-    GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
-    GUICtrlSetColor(-1, $COLOR_SECONDARY)
-    GUICtrlSetBkColor(-1, $COLOR_CARD_BG)
-
-    Assign($varName, GUICtrlCreateLabel($value, $x + 10, $y + 35, 180, 30, 0x01), 2)
-    GUICtrlSetFont(Eval($varName), 20, 600, 0, "Segoe UI")
-    GUICtrlSetColor(Eval($varName), $color)
-    GUICtrlSetBkColor(Eval($varName), $COLOR_CARD_BG)
 EndFunc
