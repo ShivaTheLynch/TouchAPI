@@ -3345,3 +3345,26 @@ Func CheckForDisconnect()
 EndFunc
 
 #EndRegion
+
+; Add missing variables and constants from GwAu3_AddOn2222s.au3
+
+; Add missing variables that might be referenced
+Global $GoldItemsGained = 0
+Global $LockpicksGained = 0
+Global $KurzickTitle = 0
+Global $KurzickPointsGained = 0
+Global $KurzickPointsStart = 0
+Global $LuxonTitle = 0
+Global $LuxonPointsGained = 0
+Global $LuxonPointsStart = 0
+Global $RunTime = 0
+Global $RunTimeCalc = 0
+Global $RunTimeMinutes = 0
+Global $RunTimeSeconds = 0
+Global $AvgRunTimeMinutes = 0
+Global $AvgRunTimeSeconds = 0
+Global $AvgTime[0]
+Global $SuccessCount = 0
+Global $FailCount = 0
+
+
