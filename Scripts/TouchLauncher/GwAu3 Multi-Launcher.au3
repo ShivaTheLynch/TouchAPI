@@ -610,6 +610,7 @@ Func LaunchAll()
     If $selectedBots = 0 Then
         AddLog("⚠️ No bots selected for launch. Please select which bots to launch first.", $COLOR_WARNING)
         AddLog("💡 Tip: Click on the 'Launch' column checkboxes to select bots, or use 'Select All' button", $COLOR_INFO)
+        AddLog("💡 Tip: You can also click on individual account rows to select them", $COLOR_INFO)
         Return
     EndIf
 
@@ -636,6 +637,7 @@ Func LaunchSelected()
     Local $selected = _GUICtrlListView_GetSelectedIndices($lvAccounts, True)
     If $selected[0] = 0 Then
         AddLog("⚠️ No account selected", $COLOR_WARNING)
+        AddLog("💡 Tip: Click on an account row to select it, then click Launch", $COLOR_INFO)
         Return
     EndIf
 
@@ -1207,7 +1209,15 @@ Func CreateModernGUI()
 
     ; Add tooltip for Launch column
     Local $hLaunchHeader = GUICtrlCreateLabel("", 35 + 60, 210, 90, 20)
-    GUICtrlSetTip($hLaunchHeader, "Click to select/deselect this bot for Launch All feature")
+    GUICtrlSetTip($hLaunchHeader, "Click to select/deselect this bot for Launch Selected feature")
+
+    ; Add tooltip for Keep Alive column
+    Local $hKeepAliveHeader = GUICtrlCreateLabel("", 35 + 60 + 90 + 220 + 180 + 70 + 70, 210, 90, 20)
+    GUICtrlSetTip($hKeepAliveHeader, "Click to enable/disable auto-restart for this account")
+
+    ; Add tooltip for Bot Selection column
+    Local $hBotSelectionHeader = GUICtrlCreateLabel("", 35 + 60 + 90 + 220 + 180 + 70 + 70 + 90, 210, 140, 20)
+    GUICtrlSetTip($hBotSelectionHeader, "Click to select a bot for this account")
 
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 
@@ -1215,6 +1225,7 @@ Func CreateModernGUI()
     $btnEdit = CreateEmojiButton(145, 510, 100, 32, "Edit", $EMOJI_EDIT, "ShowEditAccountDialog", $COLOR_INFO)
     $btnDelete = CreateEmojiButton(255, 510, 100, 32, "Delete", $EMOJI_TRASH, "DeleteAccount", $COLOR_ERROR)
     $btnLaunch = CreateEmojiButton(365, 510, 100, 32, "Launch", $EMOJI_PLAY, "LaunchSelected", $COLOR_ACCENT)
+    GUICtrlSetTip($btnLaunch, "Launch the selected account. First click on an account row to select it.")
     $btnLaunchAll = CreateEmojiButton(475, 510, 120, 32, "Launch Selected", $EMOJI_PLAY, "LaunchAll", $COLOR_WARNING)
     $btnLaunchAllBots = CreateEmojiButton(605, 510, 100, 32, "Launch All", $EMOJI_PLAY, "LaunchAllBots", $COLOR_SUCCESS)
     $btnSelectAll = CreateEmojiButton(715, 510, 100, 32, "Select All", $EMOJI_SUCCESS, "SelectAllBots", $COLOR_SECONDARY)
@@ -2364,12 +2375,18 @@ Func WM_NOTIFY($hWnd, $iMsg, $wParam, $lParam)
                     Local $iItem = DllStructGetData($tInfo, "Index")
                     Local $iSubItem = DllStructGetData($tInfo, "SubItem")
 
-                    If $iItem >= 0 And $iSubItem = 5 Then
-                        ToggleKeepAlive($iItem)
-                    ElseIf $iItem >= 0 And $iSubItem = 6 Then
-                        ShowBotSelectionMenu($iItem)
-                    ElseIf $iItem >= 0 And $iSubItem = 7 Then
+                    ; Column 1: Launch selection checkboxes
+                    If $iItem >= 0 And $iSubItem = 1 Then
                         ToggleBotLaunchSelection($iItem)
+                    ; Column 6: Keep Alive checkboxes  
+                    ElseIf $iItem >= 0 And $iSubItem = 6 Then
+                        ToggleKeepAlive($iItem)
+                    ; Column 7: Bot Selection
+                    ElseIf $iItem >= 0 And $iSubItem = 7 Then
+                        ShowBotSelectionMenu($iItem)
+                    ; Other columns: Handle row selection
+                    ElseIf $iItem >= 0 Then
+                        HandleRowSelection($iItem)
                     EndIf
 
                 Case $NM_DBLCLK
@@ -2459,9 +2476,9 @@ Func SetListViewCursor()
     If $aCursorInfo[4] = $lvAccounts Then
         Local $aHit = _GUICtrlListView_SubItemHitTest($lvAccounts)
         If $aHit[0] >= 0 And ($aHit[1] = 1 Or $aHit[1] = 6 Or $aHit[1] = 7) Then
-            GUISetCursor(0, 1)
+            GUISetCursor(0, 1) ; Hand cursor for interactive columns
         Else
-            GUISetCursor(2, 1)
+            GUISetCursor(2, 1) ; Arrow cursor for non-interactive columns
         EndIf
     EndIf
 EndFunc
@@ -3058,4 +3075,18 @@ Func CreateStatsCard($x, $y, $title, $value, $color, $varName)
     GUICtrlSetFont(Eval($varName), 20, 600, 0, "Segoe UI")
     GUICtrlSetColor(Eval($varName), $color)
     GUICtrlSetBkColor(Eval($varName), $COLOR_CARD_BG)
+EndFunc
+
+Func HandleRowSelection($idx)
+    ; Clear previous selection
+    _GUICtrlListView_SetItemSelected($lvAccounts, -1, False)
+    
+    ; Select the clicked row
+    If $idx >= 0 Then
+        _GUICtrlListView_SetItemSelected($lvAccounts, $idx, True)
+        Local $accountName = $aAccounts[$idx][2]
+        If $accountName = "" Then $accountName = $aAccounts[$idx][0]
+        GUICtrlSetData($lblActivityText, "Selected: " & $accountName)
+        AddLog("📋 Selected account: " & $aAccounts[$idx][0], $COLOR_INFO)
+    EndIf
 EndFunc
