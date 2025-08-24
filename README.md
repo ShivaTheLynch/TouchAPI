@@ -3,7 +3,7 @@
 A comprehensive **AutoIt3 API** for automating and controlling **Guild Wars**, featuring advanced farming bots with robust disconnect detection, stuck prevention, and auto-start capabilities.
 
 ---
-
+Test
 ## 🚀 Quick Start
 
 ### Prerequisites
